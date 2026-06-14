@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 @layer base {
+  * {
+    box-sizing: border-box;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
@@ -8,83 +12,20 @@
   }
 
   body {
-    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-white;
-  }
-
-  h1 {
-    @apply text-4xl font-bold mb-4;
-  }
-
-  h2 {
-    @apply text-3xl font-bold mb-3;
-  }
-
-  h3 {
-    @apply text-2xl font-semibold mb-3;
-  }
-
-  h4, h5, h6 {
-    @apply text-lg font-semibold mb-2;
-  }
-
-  p {
-    @apply mb-4;
-  }
-
-  p:last-child {
-    @apply mb-0;
-  }
-
-  a {
-    @apply text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors;
-  }
-
-  ul, ol {
-    @apply ml-6 mb-4;
-  }
-
-  li {
-    @apply mb-2;
-  }
-
-  code, pre {
-    @apply bg-gray-100 dark:bg-gray-800 rounded text-sm;
-  }
-
-  code {
-    @apply px-2 py-1 text-red-600 dark:text-red-400;
-    font-family: "Courier New", Courier, monospace;
-  }
-
-  pre {
-    @apply p-4 overflow-x-auto mb-4;
-    font-family: "Courier New", Courier, monospace;
-  }
-
-  pre code {
-    @apply bg-transparent text-inherit p-0;
-  }
-
-  table {
-    @apply w-full border-collapse mb-6;
-  }
-
-  th, td {
-    @apply p-4 text-left border-b border-gray-300 dark:border-gray-700;
-  }
-
-  th {
-    @apply font-semibold bg-gray-100 dark:bg-gray-800;
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background: #f5f6f2;
   }
 
   button {
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
   }
 
   button:disabled {
-    @apply opacity-60 cursor-not-allowed;
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 }
-
 

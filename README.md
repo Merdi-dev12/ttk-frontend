@@ -62,6 +62,52 @@ src/
 └── main.ts                  # Point d'entrée
 ```
 
+## Structure détaillée
+
+src/
+├── app/
+│   ├── core/                           # Logique globale, immuable et unique (Singletons)
+│   │   ├── auth/                       # Authentification (Signal-based)
+│   │   │   ├── auth.service.ts
+│   │   │   └── auth.guard.ts           # Functional Guard
+│   │   ├── services/                   # Services globaux (Cart, Theme, Api)
+│   │   │   ├── api.service.ts
+│   │   │   └── cart.service.ts         # Gestion du panier avec Signals
+│   │   └── models/                     # Interfaces et Types TypeScript
+│   │       ├── product.model.ts
+│   │       └── user.model.ts
+│   │
+│   ├── shared/                         # Composants et pipes "briques de Lego" réutilisables
+│   │   ├── components/
+│   │   │   ├── product-card/           # Carte produit réutilisable partout
+│   │   │   │   └── product-card.ts
+│   │   │   └── button/
+│   │   │       └── button.ts
+│   │   └── pipes/
+│   │       └── currency-fr.pipe.ts
+│   │
+│   ├── layouts/                        # Structures visuelles globales (Conteneurs)
+│   │   ├── main-layout/                # Navbar + Footer + <router-outlet> (Public/Client)
+│   │   │   └── main-layout.ts
+│   │   └── admin-layout/               # Sidebar + Header (Pour les vendeurs / admin)
+│   │       └── admin-layout.ts
+│   │
+│   ├── features/                       # Fonctionnalités métier (Découpées par domaine, Lazy-loaded)
+│   │   ├── home/                       # Page d'accueil
+│   │   │   └── home.ts
+│   │   ├── products/                   # Catalogue, détails produits
+│   │   │   ├── catalog/ catalog.ts
+│   │   │   └── detail/ detail.ts
+│   │   ├── cart/                       # Page Panier / Checkout
+│   │   │   └── checkout.ts
+│   │   └── dashboard/                  # Espace vendeur (Protégé)
+│   │       └── dashboard.ts
+│   │
+│   ├── app.routes.ts                   # Configuration du routage et des protections (Guards)
+│   ├── app.config.ts                   # Configuration globale (Providers, Hydration, Routing)
+│   ├── app.ts                          # Composant Racine (Root) ultra-léger
+│   └── constants.ts                    # Constantes de l'application (API_URL, ROLES, etc.)
+
 ## 🛠️ Développement
 
 ### Démarrer le serveur

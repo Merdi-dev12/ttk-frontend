@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './home/home.component';
+import { AdminDashboardComponent } from './admin/admin-dashboard';
+import { LoginComponent } from './auth/login';
+import { adminGuard } from './core/admin.guard';
 
 /**
  * Application Routes Configuration
@@ -7,6 +9,15 @@ import { HomeComponent } from './home/home.component';
 export const routes: Routes = [
   {
     path: '',
-    component: HomeComponent
+    component: AdminDashboardComponent,
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'login',
+    component: LoginComponent
+  },
+  {
+    path: '**',
+    redirectTo: ''
   }
 ];

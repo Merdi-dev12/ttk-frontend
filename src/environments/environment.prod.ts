@@ -4,7 +4,7 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://api.example.com',
+  apiUrl: '/api/v1',
   appName: 'TTK Services',
   logLevel: 'error'
 };

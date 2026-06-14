@@ -1,0 +1,68 @@
+<main class="login-page">
+  <section class="login-brand">
+    <div class="brand-lockup">
+      <span>T</span>
+      <div><strong>TTK</strong><small>Administration</small></div>
+    </div>
+    <div class="brand-message">
+      <span class="eyebrow">Espace sécurisé</span>
+      <h1>Pilotez vos services depuis un seul endroit.</h1>
+      <p>Catalogue, utilisateurs et opérations sont réunis dans une interface claire, pensée pour le travail quotidien.</p>
+    </div>
+    <div class="security-note">
+      <lucide-icon name="shield-check" [size]="20"></lucide-icon>
+      <div><strong>Accès administrateur uniquement</strong><small>Vos identifiants sont vérifiés par l’API TTK.</small></div>
+    </div>
+  </section>
+
+  <section class="login-form-panel">
+    <div class="mobile-brand">
+      <span>T</span><strong>TTK Administration</strong>
+    </div>
+    <form class="login-card" (ngSubmit)="submit()">
+      <div class="form-heading">
+        <span class="eyebrow">Bienvenue</span>
+        <h2>Connexion administrateur</h2>
+        <p>Utilisez le compte créé côté backend pour accéder au tableau de bord.</p>
+      </div>
+
+      @if (errorMessage) {
+        <div class="login-error">
+          <lucide-icon name="circle-alert" [size]="18"></lucide-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+
+      <label>
+        Adresse email
+        <span class="input-control">
+          <lucide-icon name="mail" [size]="18"></lucide-icon>
+          <input [(ngModel)]="email" name="email" type="email" autocomplete="email" placeholder="admin@ttk-services.com" required />
+        </span>
+      </label>
+
+      <label>
+        Mot de passe
+        <span class="input-control">
+          <lucide-icon name="lock-keyhole" [size]="18"></lucide-icon>
+          <input [(ngModel)]="password" name="password" [type]="passwordVisible ? 'text' : 'password'" autocomplete="current-password" placeholder="Votre mot de passe" required />
+          <button type="button" [attr.aria-label]="passwordVisible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'" (click)="passwordVisible = !passwordVisible">
+            <lucide-icon [name]="passwordVisible ? 'eye-off' : 'eye'" [size]="18"></lucide-icon>
+          </button>
+        </span>
+      </label>
+
+      <button class="login-button" type="submit" [disabled]="loading || !email.trim() || !password">
+        @if (loading) {
+          <lucide-icon class="spinner" name="loader-circle" [size]="18"></lucide-icon>
+          Connexion en cours...
+        } @else {
+          Se connecter
+          <lucide-icon name="arrow-right" [size]="18"></lucide-icon>
+        }
+      </button>
+
+      <p class="login-help">Le compte administrateur doit d’abord être créé avec la commande backend prévue à cet effet.</p>
+    </form>
+  </section>
+</main>
