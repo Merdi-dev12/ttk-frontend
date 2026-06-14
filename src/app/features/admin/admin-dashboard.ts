@@ -72,7 +72,7 @@ import {
   X
 } from 'lucide-angular';
 import { finalize, forkJoin, switchMap } from 'rxjs';
-import { AdminApiService } from '../core/admin-api.service';
+import { AdminApiService } from '../../core/services/admin-api.service';
 import {
   AdminProduct,
   AdminService,
@@ -84,7 +84,7 @@ import {
   FieldType,
   ServiceType
 } from '../../core/models/api.models';
-import { AuthService } from '../core/auth.service';
+import { AuthService } from '../../core/services/auth.service';
 
 export const ADMIN_ICONS = {
   Activity,

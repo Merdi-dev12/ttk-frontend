@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { finalize } from 'rxjs';
-import { AuthService } from '../core/auth.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -36,7 +36,7 @@ export class LoginComponent {
         this.cdr.markForCheck();
       })
     ).subscribe({
-      next: () => void this.router.navigate(['/']),
+      next: () => void this.router.navigate(['/gestion-interne-ttk-v2/dashboard']),
       error: (error: { error?: { message?: string }; message?: string }) => {
         this.errorMessage = error.error?.message ?? error.message ?? 'Connexion impossible. Vérifiez vos identifiants.';
       }

@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
-import { environment } from './environments/environment';
-import { ApiResponse, ApiUser, LoginResponseData } from './models/api.models';
+import { environment } from '../environments/environment';
+import { ApiResponse, ApiUser, LoginResponseData } from '../models/api.models';
 
 const REFRESH_TOKEN_KEY = 'ttk_admin_refresh_token';
 const LAST_ACTIVITY_KEY = 'ttk_admin_last_activity';
