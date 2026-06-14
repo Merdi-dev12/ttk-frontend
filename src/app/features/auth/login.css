@@ -13,7 +13,7 @@
   grid-template-columns: minmax(360px, 0.9fr) minmax(480px, 1.1fr);
   background: #f5f6f2;
   color: #17201d;
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-family: "Inria Sans", sans-serif;
   letter-spacing: 0;
 }
 
@@ -118,13 +118,17 @@
 
 .login-form-panel {
   display: grid;
+  min-width: 0;
   min-height: 100vh;
   place-items: center;
   padding: 34px;
+  overflow: hidden;
 }
 
 .login-card {
   width: min(430px, 100%);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .form-heading {
@@ -142,6 +146,7 @@
   color: #6d7772;
   font-size: 12px;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .login-card label {
@@ -153,6 +158,8 @@
 }
 
 .input-control {
+  width: 100%;
+  min-width: 0;
   height: 48px;
   gap: 10px;
   padding: 0 13px;
@@ -277,5 +284,12 @@
 
   .form-heading h2 {
     font-size: 25px;
+  }
+
+  .login-card label,
+  .form-heading,
+  .login-help {
+    min-width: 0;
+    max-width: 100%;
   }
 }

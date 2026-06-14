@@ -4,8 +4,8 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { routes } from './app.routes';
-import { ADMIN_ICONS } from './admin/admin-dashboard';
-import { authInterceptor } from './core/auth.interceptor';
+import { ADMIN_ICONS } from './features/admin/admin-dashboard';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 /**
  * Application Configuration

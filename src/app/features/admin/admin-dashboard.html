@@ -1,0 +1,491 @@
+<div class="admin-shell" [class.theme-dark]="darkMode">
+  <button class="mobile-backdrop" [class.is-visible]="mobileMenuOpen" type="button" aria-label="Fermer le menu" (click)="mobileMenuOpen = false"></button>
+
+  <aside class="sidebar" [class.is-collapsed]="sidebarCollapsed" [class.is-mobile-open]="mobileMenuOpen">
+    <div class="brand-row">
+      <button class="brand" type="button" (click)="navigate('dashboard')" aria-label="TTK Admin">
+        <span class="brand-mark">T</span>
+        @if (!sidebarCollapsed) {
+          <span class="brand-copy"><strong>TTK</strong><small>Administration</small></span>
+        }
+      </button>
+      <button class="icon-button sidebar-close-mobile" type="button" aria-label="Fermer le menu" (click)="mobileMenuOpen = false">
+        <lucide-icon name="x" [size]="19"></lucide-icon>
+      </button>
+    </div>
+
+    <div class="workspace-switcher" [class.compact]="sidebarCollapsed">
+      <span class="workspace-avatar">{{ adminInitials }}</span>
+      @if (!sidebarCollapsed) {
+        <span class="workspace-copy"><strong>{{ adminName }}</strong><small>{{ adminUser?.email }}</small></span>
+      }
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Navigation principale">
+      @if (!sidebarCollapsed) { <span class="nav-label">Espace de travail</span> }
+      @for (item of primaryNavigation; track item.id) {
+        <button class="nav-item" [class.active]="activeSection === item.id" type="button" [attr.title]="sidebarCollapsed ? item.label : null" (click)="navigate(item.id)">
+          <lucide-icon [name]="item.icon" [size]="19"></lucide-icon>
+          @if (!sidebarCollapsed) { <span>{{ item.label }}</span> }
+        </button>
+      }
+
+      @if (!sidebarCollapsed) { <span class="nav-label nav-label-spaced">Gestion</span> }
+      @for (item of secondaryNavigation; track item.id) {
+        <button class="nav-item" [class.active]="activeSection === item.id" type="button" [attr.title]="sidebarCollapsed ? item.label : null" (click)="navigate(item.id)">
+          <lucide-icon [name]="item.icon" [size]="19"></lucide-icon>
+          @if (!sidebarCollapsed) { <span>{{ item.label }}</span> }
+        </button>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" type="button" [attr.title]="sidebarCollapsed ? 'Aide' : null">
+        <lucide-icon name="circle-alert" [size]="19"></lucide-icon>
+        @if (!sidebarCollapsed) { <span>Centre d’aide</span> }
+      </button>
+      <button class="nav-item logout" type="button" [disabled]="loggingOut" [attr.title]="sidebarCollapsed ? 'Déconnexion' : null" (click)="logout()">
+        <lucide-icon name="log-out" [size]="19"></lucide-icon>
+        @if (!sidebarCollapsed) { <span>{{ loggingOut ? 'Déconnexion...' : 'Déconnexion' }}</span> }
+      </button>
+      <button class="collapse-button" type="button" [attr.aria-label]="sidebarCollapsed ? 'Agrandir le menu' : 'Réduire le menu'" (click)="sidebarCollapsed = !sidebarCollapsed">
+        <lucide-icon [name]="sidebarCollapsed ? 'panel-left-open' : 'panel-left-close'" [size]="18"></lucide-icon>
+        @if (!sidebarCollapsed) { <span>Réduire le menu</span> }
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-column">
+    <header class="topbar">
+      <button class="icon-button mobile-menu-button" type="button" aria-label="Ouvrir le menu" (click)="mobileMenuOpen = true">
+        <lucide-icon name="menu" [size]="21"></lucide-icon>
+      </button>
+
+      <div class="topbar-search">
+        <lucide-icon name="search" [size]="18"></lucide-icon>
+        <input [(ngModel)]="searchQuery" type="search" placeholder="Rechercher dans TTK..." aria-label="Rechercher" />
+        <kbd>Ctrl K</kbd>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="icon-button" type="button" [attr.aria-label]="darkMode ? 'Mode clair' : 'Mode sombre'" (click)="toggleTheme()">
+          <lucide-icon [name]="darkMode ? 'sun' : 'moon'" [size]="18"></lucide-icon>
+        </button>
+        <div class="popover-anchor">
+          <button class="icon-button notification-button" type="button" aria-label="Notifications" (click)="toggleNotifications($event)">
+            <lucide-icon name="bell" [size]="18"></lucide-icon><span></span>
+          </button>
+          @if (notificationsOpen) {
+            <div class="popover notifications-popover" (click)="keepPopoverOpen($event)">
+              <div class="popover-heading"><strong>Notifications</strong><button type="button" (click)="notificationsOpen = false">Fermer</button></div>
+              <div class="notification-item">
+                <span class="notification-icon mint"><lucide-icon name="briefcase-business" [size]="17"></lucide-icon></span>
+                <div><strong>Catalogue synchronisé</strong><small>{{ services.length }} services chargés depuis l’API</small></div>
+              </div>
+              <div class="notification-item">
+                <span class="notification-icon amber"><lucide-icon name="users" [size]="17"></lucide-icon></span>
+                <div><strong>Utilisateurs disponibles</strong><small>{{ users.length }} comptes administrables</small></div>
+              </div>
+              <div class="notification-item">
+                <span class="notification-icon blue"><lucide-icon name="activity" [size]="17"></lucide-icon></span>
+                <div><strong>Intégration progressive</strong><small>Les endpoints transactionnels restent à exposer</small></div>
+              </div>
+            </div>
+          }
+        </div>
+        <div class="popover-anchor profile-anchor">
+          <button class="profile-button" type="button" (click)="toggleProfile($event)">
+            <span class="profile-avatar">{{ adminInitials }}</span>
+            <span class="profile-name">{{ adminUser?.nom ?? 'Admin' }}</span>
+            <lucide-icon name="chevron-down" [size]="15"></lucide-icon>
+          </button>
+          @if (profileOpen) {
+            <div class="popover profile-popover" (click)="keepPopoverOpen($event)">
+              <div class="profile-summary"><strong>{{ adminName }}</strong><small>{{ adminUser?.email }}</small></div>
+              <button type="button" (click)="navigate('settings')"><lucide-icon name="settings" [size]="17"></lucide-icon> Paramètres du compte</button>
+              <button type="button" [disabled]="loggingOut" (click)="logout()"><lucide-icon name="log-out" [size]="17"></lucide-icon> Se déconnecter</button>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="page-heading">
+        <div>
+          <div class="breadcrumb"><span>{{ currentMeta.eyebrow }}</span><lucide-icon name="chevron-right" [size]="14"></lucide-icon><strong>{{ currentMeta.title }}</strong></div>
+          <h1>{{ currentMeta.title }}</h1>
+          <p>{{ currentMeta.description }}</p>
+        </div>
+        <div class="heading-actions">
+          @if (activeSection === 'dashboard' || activeSection === 'services') {
+            <button class="button primary-button" type="button" (click)="openCreateModal('service')"><lucide-icon name="plus" [size]="18"></lucide-icon>Nouveau service</button>
+          } @else if (activeSection === 'products') {
+            <button class="button primary-button" type="button" [disabled]="productServices.length === 0" (click)="openCreateModal('product')"><lucide-icon name="plus" [size]="18"></lucide-icon>Nouveau produit</button>
+          } @else if (activeSection === 'advertising') {
+            <button class="button primary-button" type="button" (click)="openCreateModal('advertising')"><lucide-icon name="plus" [size]="18"></lucide-icon>Nouvelle campagne</button>
+          }
+        </div>
+      </section>
+
+      @if (!apiReady(activeSection)) {
+        <div class="integration-banner">
+          <span><lucide-icon name="activity" [size]="18"></lucide-icon></span>
+          <div><strong>Interface prête pour l’intégration</strong><p>Ce module est défini dans le cas d’usage, mais ses endpoints ne figurent pas encore dans le contrat fourni.</p></div>
+        </div>
+      }
+
+      @if (loading) {
+        <section class="loading-state panel">
+          <lucide-icon class="spinner" name="loader-circle" [size]="25"></lucide-icon>
+          <div><strong>Chargement des données</strong><small>Connexion à l’API TTK en cours...</small></div>
+        </section>
+      } @else {
+        @switch (activeSection) {
+          @case ('dashboard') {
+            <section class="stats-grid">
+              @for (stat of stats; track stat.label) {
+                <article class="stat-card">
+                  <div class="stat-card-top"><span class="stat-icon" [attr.data-tone]="stat.tone"><lucide-icon [name]="stat.icon" [size]="20"></lucide-icon></span></div>
+                  <p>{{ stat.label }}</p><strong>{{ stat.value }}</strong><small>{{ stat.detail }}</small>
+                </article>
+              }
+            </section>
+
+            <section class="dashboard-grid">
+              <article class="panel revenue-panel">
+                <div class="panel-heading"><div><span class="panel-kicker">Catalogue</span><h2>Répartition des ressources</h2></div><div class="legend"><span></span>Données backend</div></div>
+                <div class="resource-summary">
+                  <div><strong>{{ productServices.length }}</strong><small>services produits</small></div>
+                  <div><strong>{{ services.length - productServices.length }}</strong><small>services formulaire</small></div>
+                  <div><strong>{{ products.length }}</strong><small>produits configurés</small></div>
+                </div>
+                <div class="bar-chart" aria-label="Aperçu visuel du catalogue">
+                  @for (bar of chartBars; track $index) {
+                    <div class="bar-column"><div class="bar-track"><span [style.height.%]="bar"></span></div><small>{{ ['J','F','M','A','M','J','J','A','S','O','N','D'][$index] }}</small></div>
+                  }
+                </div>
+              </article>
+
+              <article class="panel attention-panel">
+                <div class="panel-heading"><div><span class="panel-kicker">État</span><h2>Centre d’attention</h2></div></div>
+                <button class="attention-row" type="button" (click)="navigate('services')">
+                  <span class="attention-icon amber"><lucide-icon name="circle-pause" [size]="19"></lucide-icon></span>
+                  <span><strong>Services suspendus</strong><small>Masqués du catalogue public</small></span>
+                  <b>{{ suspendedServiceCount }}</b><lucide-icon name="chevron-right" [size]="17"></lucide-icon>
+                </button>
+                <button class="attention-row" type="button" (click)="navigate('products')">
+                  <span class="attention-icon blue"><lucide-icon name="package" [size]="19"></lucide-icon></span>
+                  <span><strong>Produits suspendus</strong><small>Réactivation disponible</small></span>
+                  <b>{{ suspendedProductCount }}</b><lucide-icon name="chevron-right" [size]="17"></lucide-icon>
+                </button>
+                <button class="attention-row" type="button" (click)="navigate('products')">
+                  <span class="attention-icon coral"><lucide-icon name="trash-2" [size]="19"></lucide-icon></span>
+                  <span><strong>Produits supprimés</strong><small>Restauration possible</small></span>
+                  <b>{{ deletedProductCount }}</b><lucide-icon name="chevron-right" [size]="17"></lucide-icon>
+                </button>
+                <button class="attention-row" type="button" (click)="navigate('users')">
+                  <span class="attention-icon mint"><lucide-icon name="users" [size]="19"></lucide-icon></span>
+                  <span><strong>Comptes révoqués</strong><small>Historique conservé</small></span>
+                  <b>{{ revokedUserCount }}</b><lucide-icon name="chevron-right" [size]="17"></lucide-icon>
+                </button>
+              </article>
+            </section>
+
+            <section class="panel table-panel">
+              <div class="panel-heading table-heading"><div><span class="panel-kicker">Catalogue réel</span><h2>Services récemment mis à jour</h2></div><button class="text-button" type="button" (click)="navigate('services')">Voir tous <lucide-icon name="arrow-up-right" [size]="15"></lucide-icon></button></div>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Service</th><th>Type</th><th>Ressources</th><th>Statut</th><th>Mise à jour</th><th></th></tr></thead>
+                  <tbody>
+                    @for (service of services.slice(0, 5); track service.id) {
+                      <tr>
+                        <td><strong>{{ service.name }}</strong></td>
+                        <td>{{ serviceTypeLabel(service.type) }}</td>
+                        <td>{{ service.type === 'PRODUCTS' ? serviceProducts(service.id).length + ' produit(s)' : 'Formulaire dynamique' }}</td>
+                        <td><span class="status-badge" [attr.data-tone]="statusTone(serviceStatusLabel(service.status))">{{ serviceStatusLabel(service.status) }}</span></td>
+                        <td class="muted-cell">{{ formatDate(service.updated_at) }}</td>
+                        <td><button class="quiet-icon" type="button" aria-label="Gérer le service" (click)="inspectService(service)"><lucide-icon name="chevron-right" [size]="17"></lucide-icon></button></td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="6"><div class="inline-empty">Aucun service n’a encore été créé.</div></td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="quick-grid">
+              <article class="quick-card"><span class="quick-icon mint"><lucide-icon name="briefcase-business" [size]="22"></lucide-icon></span><div><h3>Configurer un service</h3><p>Créez un catalogue produit ou un formulaire sur mesure.</p></div><button class="button secondary-button" type="button" (click)="openCreateModal('service')">Commencer <lucide-icon name="arrow-right" [size]="16"></lucide-icon></button></article>
+              <article class="quick-card"><span class="quick-icon blue"><lucide-icon name="package" [size]="22"></lucide-icon></span><div><h3>Ajouter un produit</h3><p>Ajoutez ses images, modalités, prix et disponibilités.</p></div><button class="button secondary-button" type="button" [disabled]="productServices.length === 0" (click)="openCreateModal('product')">Ajouter <lucide-icon name="arrow-right" [size]="16"></lucide-icon></button></article>
+              <article class="quick-card"><span class="quick-icon coral"><lucide-icon name="users" [size]="22"></lucide-icon></span><div><h3>Gérer les utilisateurs</h3><p>Révoquez ou réactivez les comptes depuis l’API.</p></div><button class="button secondary-button" type="button" (click)="navigate('users')">Consulter <lucide-icon name="arrow-right" [size]="16"></lucide-icon></button></article>
+            </section>
+          }
+
+          @case ('services') {
+            <section class="toolbar">
+              <div class="filter-search"><lucide-icon name="search" [size]="17"></lucide-icon><input [(ngModel)]="searchQuery" (ngModelChange)="resetTablePage()" placeholder="Rechercher un service..." /></div>
+              <div class="toolbar-actions"><select [(ngModel)]="statusFilter" (ngModelChange)="resetTablePage()" aria-label="Filtrer par statut"><option>Tous</option><option>Actif</option><option>Suspendu</option><option>Supprimé</option></select></div>
+            </section>
+            <section class="service-grid">
+              @for (service of paginatedServices; track service.id) {
+                <article class="service-card">
+                  <div class="service-card-top">
+                    <span class="service-icon" [class.form-service]="service.type === 'FORM'"><lucide-icon [name]="service.type === 'PRODUCTS' ? 'package' : 'file-text'" [size]="24"></lucide-icon></span>
+                    <span class="status-badge" [attr.data-tone]="statusTone(serviceStatusLabel(service.status))">{{ serviceStatusLabel(service.status) }}</span>
+                  </div>
+                  <div class="service-copy"><h2>{{ service.name }}</h2><p>{{ service.description || 'Aucune description.' }}</p></div>
+                  <div class="service-meta">
+                    <span><small>Type</small><strong>{{ serviceTypeLabel(service.type) }}</strong></span>
+                    <span><small>Produits</small><strong>{{ service.type === 'PRODUCTS' ? serviceProducts(service.id).length : '—' }}</strong></span>
+                    <span><small>Mis à jour</small><strong>{{ formatDate(service.updated_at) }}</strong></span>
+                  </div>
+                  <div class="service-actions">
+                    <button class="button secondary-button" type="button" (click)="inspectService(service)"><lucide-icon name="eye" [size]="16"></lucide-icon>Gérer</button>
+                    <button class="quiet-icon bordered" type="button" [disabled]="service.status === 'DELETED'" [attr.aria-label]="service.status === 'ACTIVE' ? 'Suspendre' : 'Réactiver'" (click)="toggleServiceStatus(service)"><lucide-icon [name]="service.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="16"></lucide-icon></button>
+                  </div>
+                </article>
+              } @empty {
+                <div class="empty-state"><lucide-icon name="search" [size]="26"></lucide-icon><h2>Aucun service trouvé</h2><p>Essayez un autre terme ou retirez un filtre.</p></div>
+              }
+            </section>
+            <div class="data-table-footer">
+              <span>{{ currentResultCount }} résultat(s)</span>
+              <label class="page-size-control">Afficher
+                <select [(ngModel)]="tablePageSize" (ngModelChange)="resetTablePage()"><option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="20">20</option></select>
+              </label>
+              <div class="pagination-controls">
+                <button class="icon-button" type="button" [disabled]="tablePage === 1" aria-label="Page précédente" (click)="changeTablePage(-1)"><lucide-icon name="chevron-left" [size]="17"></lucide-icon></button>
+                <strong>{{ tablePage }} / {{ totalTablePages }}</strong>
+                <button class="icon-button" type="button" [disabled]="tablePage === totalTablePages" aria-label="Page suivante" (click)="changeTablePage(1)"><lucide-icon name="chevron-right" [size]="17"></lucide-icon></button>
+              </div>
+            </div>
+          }
+
+          @case ('products') {
+            <section class="toolbar">
+              <div class="filter-search"><lucide-icon name="search" [size]="17"></lucide-icon><input [(ngModel)]="searchQuery" (ngModelChange)="resetTablePage()" placeholder="Rechercher un produit..." /></div>
+              <div class="toolbar-actions"><select [(ngModel)]="statusFilter" (ngModelChange)="resetTablePage()" aria-label="Filtrer par statut"><option>Tous</option><option>Actif</option><option>Suspendu</option><option>Supprimé</option></select></div>
+            </section>
+            <section class="panel table-panel">
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Produit</th><th>Service</th><th>Modalités</th><th>Prix</th><th>Statut</th><th>Note admin</th><th>Action</th></tr></thead>
+                  <tbody>
+                    @for (product of paginatedProducts; track product.id) {
+                      <tr>
+                        <td><div class="product-cell"><span>{{ product.name.slice(0, 1) }}</span><strong>{{ product.name }}</strong></div></td>
+                        <td>{{ serviceName(product.service_id) }}</td>
+                        <td>{{ product.modalities.length }}</td>
+                        <td><strong>{{ productPrice(product) }}</strong></td>
+                        <td><span class="status-badge" [attr.data-tone]="statusTone(catalogStatusLabel(product.status))">{{ catalogStatusLabel(product.status) }}</span></td>
+                        <td class="note-cell">{{ product.admin_note || '—' }}</td>
+                        <td>
+                          @if (product.status === 'DELETED') {
+                            <button class="table-action" type="button" (click)="changeProductStatus(product, 'ACTIVE')"><lucide-icon name="rotate-ccw" [size]="15"></lucide-icon>Restaurer</button>
+                          } @else {
+                            <button class="table-action" type="button" (click)="changeProductStatus(product, product.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE')"><lucide-icon [name]="product.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="15"></lucide-icon>{{ product.status === 'ACTIVE' ? 'Suspendre' : 'Réactiver' }}</button>
+                          }
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="7"><div class="inline-empty">Aucun produit disponible.</div></td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="data-table-footer">
+                <span>{{ currentResultCount }} résultat(s)</span>
+                <label class="page-size-control">Afficher
+                  <select [(ngModel)]="tablePageSize" (ngModelChange)="resetTablePage()"><option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="20">20</option></select>
+                </label>
+                <div class="pagination-controls">
+                  <button class="icon-button" type="button" [disabled]="tablePage === 1" aria-label="Page précédente" (click)="changeTablePage(-1)"><lucide-icon name="chevron-left" [size]="17"></lucide-icon></button>
+                  <strong>{{ tablePage }} / {{ totalTablePages }}</strong>
+                  <button class="icon-button" type="button" [disabled]="tablePage === totalTablePages" aria-label="Page suivante" (click)="changeTablePage(1)"><lucide-icon name="chevron-right" [size]="17"></lucide-icon></button>
+                </div>
+              </div>
+            </section>
+          }
+
+          @case ('users') {
+            <section class="toolbar">
+              <div class="filter-search"><lucide-icon name="search" [size]="17"></lucide-icon><input [(ngModel)]="searchQuery" (ngModelChange)="resetTablePage()" placeholder="Nom ou adresse email..." /></div>
+              <div class="toolbar-actions"><select [(ngModel)]="statusFilter" (ngModelChange)="resetTablePage()" aria-label="Filtrer par statut"><option>Tous</option><option>Actif</option><option>Révoqué</option></select></div>
+            </section>
+            <section class="panel table-panel">
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th>Utilisateur</th><th>Inscription</th><th>Rôle</th><th>Statut</th><th>Accès</th></tr></thead>
+                  <tbody>
+                    @for (user of paginatedUsers; track user.id) {
+                      <tr>
+                        <td><div class="customer-cell user-cell"><span>{{ userInitials(user) }}</span><div><strong>{{ userName(user) }}</strong><small>{{ user.email }}</small></div></div></td>
+                        <td>{{ formatDate(user.created_at) }}</td>
+                        <td>{{ user.role }}</td>
+                        <td><span class="status-badge" [attr.data-tone]="statusTone(userStatusLabel(user.status))">{{ userStatusLabel(user.status) }}</span></td>
+                        <td><button class="table-action" type="button" (click)="toggleUserStatus(user)"><lucide-icon [name]="user.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="15"></lucide-icon>{{ user.status === 'ACTIVE' ? 'Révoquer' : 'Réactiver' }}</button></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="data-table-footer">
+                <span>{{ currentResultCount }} résultat(s)</span>
+                <label class="page-size-control">Afficher
+                  <select [(ngModel)]="tablePageSize" (ngModelChange)="resetTablePage()"><option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="20">20</option></select>
+                </label>
+                <div class="pagination-controls">
+                  <button class="icon-button" type="button" [disabled]="tablePage === 1" aria-label="Page précédente" (click)="changeTablePage(-1)"><lucide-icon name="chevron-left" [size]="17"></lucide-icon></button>
+                  <strong>{{ tablePage }} / {{ totalTablePages }}</strong>
+                  <button class="icon-button" type="button" [disabled]="tablePage === totalTablePages" aria-label="Page suivante" (click)="changeTablePage(1)"><lucide-icon name="chevron-right" [size]="17"></lucide-icon></button>
+                </div>
+              </div>
+            </section>
+          }
+
+          @default {
+            <section class="module-overview">
+              <article class="module-main panel">
+                <span class="module-icon"><lucide-icon [name]="activeSection === 'orders' ? 'shopping-cart' : activeSection === 'payments' ? 'wallet-cards' : activeSection === 'invoices' ? 'file-check' : activeSection === 'submissions' ? 'inbox' : activeSection === 'advertising' ? 'megaphone' : 'settings'" [size]="28"></lucide-icon></span>
+                <span class="panel-kicker">Module admin</span><h2>{{ currentMeta.title }}</h2><p>{{ currentMeta.description }}</p>
+                <div class="module-metrics"><div><small>État du backend</small><strong>À connecter</strong></div><div><small>Interface</small><strong>Prête</strong></div></div>
+              </article>
+              <aside class="module-side panel">
+                <span class="panel-kicker">Flux prévu</span><h2>Cycle opérationnel</h2>
+                <div class="workflow">
+                  <div class="workflow-item done"><span><lucide-icon name="check" [size]="14"></lucide-icon></span><div><strong>Action utilisateur</strong><small>Achat ou soumission</small></div></div>
+                  <div class="workflow-line"></div>
+                  <div class="workflow-item active"><span>2</span><div><strong>Traitement admin</strong><small>Vérification et changement de statut</small></div></div>
+                  <div class="workflow-line"></div>
+                  <div class="workflow-item"><span>3</span><div><strong>Notification</strong><small>Email et mise à jour du dashboard</small></div></div>
+                </div>
+              </aside>
+            </section>
+          }
+        }
+      }
+    </main>
+  </div>
+
+  @if (modalType) {
+    <div class="modal-backdrop" role="presentation" (click)="closeModal()">
+      <section class="modal form-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <div class="modal-heading">
+          <div><span class="panel-kicker">Création</span><h2>{{ modalType === 'service' ? 'Nouveau service' : modalType === 'product' ? 'Nouveau produit' : 'Nouvelle campagne' }}</h2></div>
+          <button class="icon-button" type="button" aria-label="Fermer" (click)="closeModal()"><lucide-icon name="x" [size]="19"></lucide-icon></button>
+        </div>
+
+        @if (errorMessage) {
+          <div class="form-error"><lucide-icon name="circle-alert" [size]="18"></lucide-icon><span>{{ errorMessage }}</span></div>
+        }
+
+        @if (modalType === 'service') {
+          <form (ngSubmit)="createItem()">
+            <div class="form-grid two-columns">
+              <label>Nom du service<input [(ngModel)]="serviceForm.name" name="serviceName" required placeholder="Ex. Abonnements" /></label>
+              <label>Type de service
+                <select [(ngModel)]="serviceForm.type" name="serviceType"><option value="PRODUCTS">Produits</option><option value="FORM">Formulaire dynamique</option></select>
+              </label>
+            </div>
+            <label>URL de l’image<input [(ngModel)]="serviceForm.imageUrl" name="serviceImage" type="url" placeholder="https://cdn.exemple.com/service.jpg" /></label>
+            <label>Description<textarea [(ngModel)]="serviceForm.description" name="serviceDescription" rows="3" placeholder="Présentez clairement ce service..."></textarea></label>
+
+            @if (serviceForm.type === 'FORM') {
+              <div class="form-builder-heading"><div><span class="panel-kicker">Champs dynamiques</span><h3>Formulaire utilisateur</h3></div><button class="button secondary-button" type="button" (click)="addServiceField()"><lucide-icon name="plus" [size]="16"></lucide-icon>Ajouter un champ</button></div>
+              @for (field of serviceForm.fields; track $index) {
+                <div class="builder-block">
+                  <div class="builder-block-heading"><strong>Champ {{ $index + 1 }}</strong><button class="quiet-icon" type="button" aria-label="Supprimer le champ" (click)="removeServiceField($index)"><lucide-icon name="trash-2" [size]="16"></lucide-icon></button></div>
+                  <div class="form-grid two-columns">
+                    <label>Libellé<input [(ngModel)]="field.label" [name]="'fieldLabel' + $index" required placeholder="Ex. Montant souhaité" /></label>
+                    <label>Nom technique<input [(ngModel)]="field.technicalName" [name]="'fieldTechnical' + $index" required placeholder="montant_souhaite" /></label>
+                    <label>Type
+                      <select [(ngModel)]="field.fieldType" [name]="'fieldType' + $index">@for (type of fieldTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select>
+                    </label>
+                    <label class="checkbox-label"><input [(ngModel)]="field.required" [name]="'fieldRequired' + $index" type="checkbox" />Champ obligatoire</label>
+                  </div>
+                  @if (field.fieldType === 'SELECT') {
+                    <label>Options séparées par des virgules<input [(ngModel)]="field.optionsText" [name]="'fieldOptions' + $index" placeholder="Salarié, Indépendant, Sans emploi" /></label>
+                  }
+                </div>
+              } @empty {
+                <div class="builder-empty"><lucide-icon name="list-plus" [size]="22"></lucide-icon><span>Ajoutez les champs qui composeront le formulaire utilisateur.</span></div>
+              }
+            }
+            <div class="modal-actions"><button class="button secondary-button" type="button" (click)="closeModal()">Annuler</button><button class="button primary-button" type="submit" [disabled]="submitting"><lucide-icon [name]="submitting ? 'loader-circle' : 'save'" [class.spinner]="submitting" [size]="17"></lucide-icon>{{ submitting ? 'Création...' : 'Créer le service' }}</button></div>
+          </form>
+        } @else if (modalType === 'product') {
+          <form (ngSubmit)="createItem()">
+            <label>Service associé
+              <select [(ngModel)]="productForm.serviceId" name="productService" required><option value="" disabled>Sélectionner un service PRODUCTS</option>@for (service of productServices; track service.id) { <option [value]="service.id">{{ service.name }}</option> }</select>
+            </label>
+            <div class="form-grid two-columns">
+              <label>Nom du produit<input [(ngModel)]="productForm.name" name="productName" required placeholder="Ex. Netflix Premium" /></label>
+              <label>Note privée admin<input [(ngModel)]="productForm.adminNote" name="productAdminNote" placeholder="Jamais visible côté client" /></label>
+            </div>
+            <label>Description<textarea [(ngModel)]="productForm.description" name="productDescription" rows="3" placeholder="Décrivez le produit..."></textarea></label>
+
+            <div class="form-builder-heading"><div><span class="panel-kicker">Médias</span><h3>Images du produit</h3></div><button class="button secondary-button" type="button" (click)="addProductImage()"><lucide-icon name="plus" [size]="16"></lucide-icon>Ajouter</button></div>
+            @for (image of productForm.images; track $index) {
+              <div class="builder-row">
+                <label class="grow-label">URL de l’image<input [(ngModel)]="image.url" [name]="'imageUrl' + $index" type="url" placeholder="https://cdn.exemple.com/produit.jpg" /></label>
+                <label class="radio-label"><input [checked]="image.isPrimary" type="radio" name="primaryImage" (change)="setPrimaryImage($index)" />Principale</label>
+                <button class="quiet-icon bordered" type="button" aria-label="Supprimer l’image" (click)="removeProductImage($index)"><lucide-icon name="trash-2" [size]="16"></lucide-icon></button>
+              </div>
+            }
+
+            <div class="form-builder-heading"><div><span class="panel-kicker">Tarification</span><h3>Modalités et prix</h3></div><button class="button secondary-button" type="button" (click)="addProductModality()"><lucide-icon name="plus" [size]="16"></lucide-icon>Ajouter</button></div>
+            @for (modality of productForm.modalities; track $index) {
+              <div class="builder-block">
+                <div class="builder-block-heading"><strong>Modalité {{ $index + 1 }}</strong><button class="quiet-icon" type="button" aria-label="Supprimer la modalité" (click)="removeProductModality($index)"><lucide-icon name="trash-2" [size]="16"></lucide-icon></button></div>
+                <div class="form-grid modality-grid">
+                  <label>Libellé<input [(ngModel)]="modality.label" [name]="'modalityLabel' + $index" required placeholder="Ex. 1 mois" /></label>
+                  <label>Prix<input [(ngModel)]="modality.price" [name]="'modalityPrice' + $index" required type="number" min="0" step="0.01" /></label>
+                  <label>Devise<select [(ngModel)]="modality.currency" [name]="'modalityCurrency' + $index"><option value="CDF">CDF</option><option value="USD">USD</option></select></label>
+                  <label>Disponibilité<select [(ngModel)]="modality.availability" [name]="'modalityAvailability' + $index"><option value="AVAILABLE">Disponible</option><option value="UNAVAILABLE">Indisponible</option><option value="ON_REQUEST">Sur demande</option></select></label>
+                </div>
+                <label>Attributs supplémentaires (JSON)<textarea [(ngModel)]="modality.additionalAttributesText" [name]="'modalityAttributes' + $index" rows="2" placeholder='{"ecrans": 1, "qualite": "HD"}'></textarea></label>
+              </div>
+            }
+            <div class="modal-actions"><button class="button secondary-button" type="button" (click)="closeModal()">Annuler</button><button class="button primary-button" type="submit" [disabled]="submitting"><lucide-icon [name]="submitting ? 'loader-circle' : 'save'" [class.spinner]="submitting" [size]="17"></lucide-icon>{{ submitting ? 'Création...' : 'Créer le produit' }}</button></div>
+          </form>
+        } @else {
+          <div class="builder-empty"><lucide-icon name="wifi-off" [size]="24"></lucide-icon><span>Le contrat backend des publicités n’est pas encore disponible.</span></div>
+          <div class="modal-actions"><button class="button secondary-button" type="button" (click)="closeModal()">Fermer</button></div>
+        }
+      </section>
+    </div>
+  }
+
+  @if (selectedService) {
+    <button class="drawer-backdrop" type="button" aria-label="Fermer le panneau" (click)="closeServicePanel()"></button>
+    <aside class="detail-drawer">
+      <div class="drawer-heading">
+        <span class="service-icon" [class.form-service]="selectedService.type === 'FORM'"><lucide-icon [name]="selectedService.type === 'PRODUCTS' ? 'package' : 'file-text'" [size]="23"></lucide-icon></span>
+        <div><small>Service</small><h2>{{ selectedService.name }}</h2></div>
+        <button class="icon-button" type="button" aria-label="Fermer" (click)="closeServicePanel()"><lucide-icon name="x" [size]="19"></lucide-icon></button>
+      </div>
+      <div class="drawer-status"><span class="status-badge" [attr.data-tone]="statusTone(serviceStatusLabel(selectedService.status))">{{ serviceStatusLabel(selectedService.status) }}</span><span>{{ serviceTypeLabel(selectedService.type) }}</span></div>
+      <p>{{ selectedService.description || 'Aucune description.' }}</p>
+      <div class="drawer-section">
+        <div class="drawer-section-heading"><h3>{{ selectedService.type === 'PRODUCTS' ? 'Produits associés' : 'Formulaire dynamique' }}</h3></div>
+        @if (selectedService.type === 'PRODUCTS') {
+          @for (product of serviceProducts(selectedService.id); track product.id) {
+            <div class="drawer-list-item"><span><lucide-icon name="package" [size]="17"></lucide-icon></span><div><strong>{{ product.name }}</strong><small>{{ product.modalities.length }} modalité(s) · {{ catalogStatusLabel(product.status) }}</small></div></div>
+          } @empty {
+            <div class="builder-empty"><span>Aucun produit dans ce service.</span></div>
+          }
+        } @else {
+          <div class="builder-empty"><lucide-icon name="braces" [size]="22"></lucide-icon><span>Les champs sont créés avec le service. Un endpoint de lecture détaillée sera nécessaire pour les afficher ici.</span></div>
+        }
+      </div>
+      <div class="drawer-actions">
+        <button class="button danger-button" type="button" [disabled]="selectedService.status === 'DELETED'" (click)="toggleServiceStatus(selectedService)"><lucide-icon [name]="selectedService.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="16"></lucide-icon>{{ selectedService.status === 'ACTIVE' ? 'Suspendre' : 'Réactiver' }}</button>
+      </div>
+    </aside>
+  }
+
+  @if (toastMessage) {
+    <div class="toast" [class.error]="toastIsError"><span><lucide-icon [name]="toastIsError ? 'circle-alert' : 'circle-check'" [size]="18"></lucide-icon></span>{{ toastMessage }}</div>
+  }
+</div>

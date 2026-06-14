@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { environment } from './environments/environment';
 import {
   AdminProduct,
   AdminService,
@@ -14,7 +14,7 @@ import {
   Pagination,
   ServiceType,
   UserStatus
-} from './api.models';
+} from './models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminApiService {

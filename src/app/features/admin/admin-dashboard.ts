@@ -20,6 +20,7 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   CircleAlert,
   CircleCheck,
@@ -82,7 +83,7 @@ import {
   Currency,
   FieldType,
   ServiceType
-} from '../core/api.models';
+} from '../../core/models/api.models';
 import { AuthService } from '../core/auth.service';
 
 export const ADMIN_ICONS = {
@@ -97,6 +98,7 @@ export const ADMIN_ICONS = {
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   CircleAlert,
   CircleCheck,
@@ -211,8 +213,11 @@ export class AdminDashboardComponent implements OnInit {
   darkMode = localStorage.getItem('ttk_admin_theme') === 'dark';
   searchQuery = '';
   statusFilter = 'Tous';
+  tablePage = 1;
+  tablePageSize = 10;
   modalType: ModalType | null = null;
   toastMessage = '';
+  toastIsError = false;
   errorMessage = '';
   loading = true;
   submitting = false;
@@ -272,8 +277,15 @@ export class AdminDashboardComponent implements OnInit {
 
   @HostListener('document:click')
   closePopovers(): void {
+    this.auth.registerActivity();
     this.notificationsOpen = false;
     this.profileOpen = false;
+  }
+
+  @HostListener('document:keydown')
+  @HostListener('document:mousemove')
+  registerAdminActivity(): void {
+    this.auth.registerActivity();
   }
 
   get currentMeta() {
@@ -318,6 +330,29 @@ export class AdminDashboardComponent implements OnInit {
     );
   }
 
+  get currentResultCount(): number {
+    if (this.activeSection === 'services') return this.filteredServices.length;
+    if (this.activeSection === 'products') return this.filteredProducts.length;
+    if (this.activeSection === 'users') return this.filteredUsers.length;
+    return 0;
+  }
+
+  get totalTablePages(): number {
+    return Math.max(1, Math.ceil(this.currentResultCount / this.tablePageSize));
+  }
+
+  get paginatedServices(): AdminService[] {
+    return this.paginate(this.filteredServices);
+  }
+
+  get paginatedProducts(): AdminProduct[] {
+    return this.paginate(this.filteredProducts);
+  }
+
+  get paginatedUsers(): ApiUser[] {
+    return this.paginate(this.filteredUsers);
+  }
+
   get stats() {
     return [
       { label: 'Services', value: String(this.services.length), detail: `${this.services.filter((item) => item.status === 'ACTIVE').length} actifs`, icon: 'briefcase-business', tone: 'mint' },
@@ -327,12 +362,37 @@ export class AdminDashboardComponent implements OnInit {
     ];
   }
 
+  get suspendedServiceCount(): number {
+    return this.services.filter((item) => item.status === 'SUSPENDED').length;
+  }
+
+  get suspendedProductCount(): number {
+    return this.products.filter((item) => item.status === 'SUSPENDED').length;
+  }
+
+  get deletedProductCount(): number {
+    return this.products.filter((item) => item.status === 'DELETED').length;
+  }
+
+  get revokedUserCount(): number {
+    return this.users.filter((item) => item.status === 'REVOKED').length;
+  }
+
   navigate(section: SectionId): void {
     this.activeSection = section;
     this.mobileMenuOpen = false;
     this.searchQuery = '';
     this.statusFilter = 'Tous';
+    this.tablePage = 1;
     this.closePopovers();
+  }
+
+  resetTablePage(): void {
+    this.tablePage = 1;
+  }
+
+  changeTablePage(direction: -1 | 1): void {
+    this.tablePage = Math.min(this.totalTablePages, Math.max(1, this.tablePage + direction));
   }
 
   toggleNotifications(event: MouseEvent): void {
@@ -476,7 +536,8 @@ export class AdminDashboardComponent implements OnInit {
     return this.userName(user).split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase();
   }
 
-  formatDate(date: string): string {
+  formatDate(date?: string): string {
+    if (!date) return 'À l’instant';
     return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(date));
   }
 
@@ -698,6 +759,11 @@ export class AdminDashboardComponent implements OnInit {
     return !query || values.some((value) => value.toLocaleLowerCase('fr').includes(query));
   }
 
+  private paginate<T>(items: T[]): T[] {
+    const start = (this.tablePage - 1) * this.tablePageSize;
+    return items.slice(start, start + this.tablePageSize);
+  }
+
   private closeModalAfterSubmit(): void {
     this.modalType = null;
     this.errorMessage = '';
@@ -712,9 +778,10 @@ export class AdminDashboardComponent implements OnInit {
 
   private showToast(message: string, isError = false): void {
     this.toastMessage = message;
-    document.documentElement.dataset['toastTone'] = isError ? 'error' : 'success';
+    this.toastIsError = isError;
     window.setTimeout(() => {
       this.toastMessage = '';
+      this.toastIsError = false;
       this.cdr.markForCheck();
     }, 3200);
   }
