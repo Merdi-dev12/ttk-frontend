@@ -1,24 +1,26 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, CanMatchFn, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { AuthService } from './auth.service';
+import { ADMIN_ROUTES } from '../constants/admin-routes';
 
-const ADMIN_BASE = 'gestion-interne-ttk-v2';
-
-export const adminGuard: CanActivateFn = () => {
+const verifyAdminSession = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
   return auth.restoreSession().pipe(
-    map((authenticated) => authenticated ? true : router.createUrlTree([`/${ADMIN_BASE}/login`]))
+    map((authenticated) => authenticated ? true : router.parseUrl(ADMIN_ROUTES.login))
   );
 };
+
+export const adminGuard: CanActivateFn = verifyAdminSession;
+export const adminMatchGuard: CanMatchFn = verifyAdminSession;
 
 export const guestGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
   return auth.restoreSession().pipe(
-    map((authenticated) => authenticated ? router.createUrlTree([`/${ADMIN_BASE}/dashboard`]) : true)
+    map((authenticated) => authenticated ? router.parseUrl(ADMIN_ROUTES.dashboard) : true)
   );
 };

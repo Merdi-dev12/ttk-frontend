@@ -78,6 +78,106 @@ export interface Pagination {
   total: number;
 }
 
+export interface StorageBucket {
+  id: string;
+  name: string;
+  slug: string;
+  is_public: boolean;
+  objects_count?: number;
+  created_at: string;
+}
+
+export interface StorageObject {
+  id: string;
+  bucket_id: string;
+  name: string;
+  object_key: string;
+  url: string;
+  mime_type: string;
+  size: number;
+  created_at: string;
+}
+
+export interface DashboardSummary {
+  services: { total: number; active: number; suspended: number };
+  products: { total: number; active: number; suspended: number; deleted: number };
+  users: { total: number; active: number; revoked: number; new: number };
+  orders: { total: number; pending: number; completed: number } | null;
+  payments: { total: number; revenue: number; failed: number } | null;
+  submissions: { total: number; pending: number } | null;
+  series: DashboardSeriesPoint[];
+  currency: Currency;
+  unavailableDomains: string[];
+}
+
+export interface DashboardSeriesPoint {
+  date: string;
+  users?: number;
+  services?: number;
+  products?: number;
+  orders?: number;
+  revenue?: number;
+}
+
+export interface OrderAnalytics {
+  period: string;
+  total: number;
+  successful: number;
+  rejected: number;
+  points: Array<{
+    label: string;
+    successful: number;
+    rejected: number;
+  }>;
+}
+
+export interface AdminSettings {
+  general: {
+    platformName: string;
+    supportEmail: string;
+    supportPhone: string;
+    defaultCurrency: Currency;
+    timezone: string;
+    maintenanceMode: boolean;
+  };
+  catalog: {
+    autoPublishServices: boolean;
+    autoPublishProducts: boolean;
+    lowStockThreshold: number;
+    allowOutOfStockOrders: boolean;
+  };
+  orders: {
+    referencePrefix: string;
+    cancellationDelayMinutes: number;
+    autoCancelUnpaid: boolean;
+    requireAdminConfirmation: boolean;
+  };
+  payments: {
+    enabledCurrencies: Currency[];
+    paymentTimeoutMinutes: number;
+    manualVerification: boolean;
+  };
+  notifications: {
+    adminEmail: string;
+    notifyNewOrder: boolean;
+    notifyNewSubmission: boolean;
+    notifyPaymentFailure: boolean;
+    dailyDigest: boolean;
+  };
+  security: {
+    sessionIdleMinutes: number;
+    maxLoginAttempts: number;
+    requireTwoFactor: boolean;
+    allowedAdminIps: string[];
+  };
+  storage: {
+    maxImageSizeMb: number;
+    allowedImageTypes: string[];
+    imageQuality: number;
+    generateWebp: boolean;
+  };
+}
+
 export interface ApiResponse<T> {
   status: 'success';
   data: T;

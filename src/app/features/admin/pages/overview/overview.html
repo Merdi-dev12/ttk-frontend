@@ -1,0 +1,105 @@
+<section class="stats-grid">
+  @for (stat of stats(); track stat.label) {
+    <article class="stat-card">
+      <div class="stat-card-top">
+        <span class="stat-icon" [attr.data-tone]="stat.tone"><lucide-icon [name]="stat.icon" [size]="20"></lucide-icon></span>
+      </div>
+      <p>{{ stat.label }}</p><strong>{{ stat.value | number }}</strong><small>{{ stat.detail }}</small>
+    </article>
+  }
+</section>
+
+<section class="orders-panel panel">
+  <header class="panel-heading">
+    <div>
+      <span class="panel-kicker">Commandes</span>
+      <h2>Évolution des commandes</h2>
+      <p>Analyse des commandes réussies et rejetées sur la période.</p>
+    </div>
+    <div class="period-control" aria-label="Période du graphique">
+      @for (item of [['7d', '7 jours'], ['30d', '30 jours'], ['90d', '90 jours'], ['year', 'Cette année']]; track item[0]) {
+        <button type="button" [class.active]="period() === item[0]" (click)="setPeriod($any(item[0]))">{{ item[1] }}</button>
+      }
+    </div>
+  </header>
+
+  <div class="orders-layout">
+    <div class="line-chart-wrap">
+      <div class="chart-summary">
+        <div><strong>{{ orders().total | number }}</strong><small>commandes traitées</small></div>
+        @if (usingDemoData()) { <span>Données de démonstration</span> }
+        @if (loading()) { <lucide-icon class="spinner" name="loader-circle" [size]="16"></lucide-icon> }
+      </div>
+
+      <div class="line-chart" (mouseleave)="hoveredPoint.set(null)">
+        <svg viewBox="0 0 790 245" preserveAspectRatio="none" role="img" aria-label="Courbe des commandes réussies et rejetées">
+          <defs>
+            <linearGradient id="successArea" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#2f8f7f" stop-opacity=".24" />
+              <stop offset="100%" stop-color="#2f8f7f" stop-opacity=".02" />
+            </linearGradient>
+          </defs>
+          @for (line of [35, 90, 145, 200]; track line) {
+            <line x1="35" [attr.y1]="line" x2="760" [attr.y2]="line" class="grid-line" />
+          }
+          <path [attr.d]="successfulArea()" class="success-area" />
+          <path [attr.d]="successfulPath()" class="success-line" />
+          <path [attr.d]="rejectedPath()" class="rejected-line" />
+          @for (point of orders().points; track point.label; let index = $index) {
+            <circle [attr.cx]="pointX(index)" [attr.cy]="pointY(point.successful)" r="5" class="success-point" [class.active]="hoveredPoint() === index" />
+            <circle [attr.cx]="pointX(index)" [attr.cy]="pointY(point.rejected)" r="4" class="rejected-point" [class.active]="hoveredPoint() === index" />
+          }
+        </svg>
+
+        <div class="chart-hitboxes" [style.grid-template-columns]="'repeat(' + orders().points.length + ', minmax(0, 1fr))'">
+          @for (point of orders().points; track point.label; let index = $index) {
+            <button type="button" (mouseenter)="hoveredPoint.set(index)" (focus)="hoveredPoint.set(index)" (blur)="hoveredPoint.set(null)" [attr.aria-label]="point.label + ': ' + point.successful + ' réussies, ' + point.rejected + ' rejetées'"></button>
+          }
+        </div>
+
+        @if (hoveredPoint() !== null) {
+          @let point = orders().points[hoveredPoint()!];
+          <div class="chart-tooltip" [style.left.%]="(hoveredPoint()! / (orders().points.length - 1)) * 92 + 4">
+            <strong>{{ point.label }}</strong><span><i class="success-dot"></i>{{ point.successful }} réussies</span><span><i class="rejected-dot"></i>{{ point.rejected }} rejetées</span>
+          </div>
+        }
+
+        <div class="axis-labels" [style.grid-template-columns]="'repeat(' + orders().points.length + ', minmax(0, 1fr))'">
+          @for (point of orders().points; track point.label) { <span>{{ point.label }}</span> }
+        </div>
+      </div>
+    </div>
+
+    <aside class="distribution">
+      <div class="donut" [style.background]="donutStyle()">
+        <div><strong>{{ successRate() }}%</strong><small>réussite</small></div>
+      </div>
+      <div class="distribution-legend">
+        <div><span class="legend-color success"></span><p><strong>Réussies</strong><small>{{ orders().successful | number }} commandes</small></p><b>{{ successRate() }}%</b></div>
+        <div><span class="legend-color rejected"></span><p><strong>Rejetées</strong><small>{{ orders().rejected | number }} commandes</small></p><b>{{ rejectionRate() }}%</b></div>
+      </div>
+      <p class="distribution-note">La répartition se mettra automatiquement à jour dès que l’endpoint des commandes sera disponible.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="panel recent-panel">
+  <header class="panel-heading">
+    <div><span class="panel-kicker">Catalogue réel</span><h2>Services récemment mis à jour</h2></div>
+    <button class="text-button" type="button" (click)="navigateTo.emit('services')">Voir tous <lucide-icon name="arrow-up-right" [size]="15"></lucide-icon></button>
+  </header>
+  @for (service of services().slice(0, 5); track service.id) {
+    <button class="recent-row" type="button" (click)="navigateTo.emit('services')">
+      <span class="service-mark"><lucide-icon [name]="service.type === 'PRODUCTS' ? 'package' : 'file-text'" [size]="17"></lucide-icon></span>
+      <span><strong>{{ service.name }}</strong><small>{{ service.type === 'PRODUCTS' ? 'Catalogue produits' : 'Formulaire dynamique' }}</small></span>
+      <time>{{ formatDate(service.updated_at) }}</time>
+      <lucide-icon name="chevron-right" [size]="16"></lucide-icon>
+    </button>
+  } @empty { <div class="empty">Aucun service n’a encore été créé.</div> }
+</section>
+
+<section class="quick-grid">
+  <article><span class="quick-icon mint"><lucide-icon name="briefcase-business" [size]="22"></lucide-icon></span><div><h3>Configurer un service</h3><p>Créez un catalogue produit ou un formulaire sur mesure.</p></div><button type="button" (click)="createService.emit()">Commencer <lucide-icon name="arrow-right" [size]="16"></lucide-icon></button></article>
+  <article><span class="quick-icon blue"><lucide-icon name="package" [size]="22"></lucide-icon></span><div><h3>Ajouter un produit</h3><p>Ajoutez ses images, modalités, prix et disponibilités.</p></div><button type="button" (click)="createProduct.emit()">Ajouter <lucide-icon name="arrow-right" [size]="16"></lucide-icon></button></article>
+  <article><span class="quick-icon coral"><lucide-icon name="settings" [size]="22"></lucide-icon></span><div><h3>Configurer la plateforme</h3><p>Centralisez les règles générales et de sécurité.</p></div><button type="button" (click)="navigateTo.emit('settings')">Ouvrir <lucide-icon name="arrow-right" [size]="16"></lucide-icon></button></article>
+</section>

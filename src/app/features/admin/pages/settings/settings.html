@@ -1,0 +1,136 @@
+@if (endpointMissing()) {
+  <div class="endpoint-banner">
+    <lucide-icon name="plug-zap" [size]="19"></lucide-icon>
+    <div><strong>Interface prête à connecter</strong><p>Les valeurs affichées sont les valeurs par défaut. Les routes backend sont déjà branchées dans le frontend.</p></div>
+  </div>
+}
+
+<section class="settings-layout">
+  <aside class="settings-nav">
+    @for (item of navigation; track item.id) {
+      <button type="button" [class.active]="activeSection() === item.id" (click)="selectSection(item.id)">
+        <span><lucide-icon [name]="item.icon" [size]="18"></lucide-icon></span>
+        <div><strong>{{ item.label }}</strong><small>{{ item.detail }}</small></div>
+        <lucide-icon name="chevron-right" [size]="15"></lucide-icon>
+      </button>
+    }
+  </aside>
+
+  <article class="settings-panel">
+    <header>
+      <span><lucide-icon [name]="currentNav().icon" [size]="21"></lucide-icon></span>
+      <div><small>Configuration</small><h2>{{ currentNav().label }}</h2><p>{{ currentNav().detail }}</p></div>
+    </header>
+
+    @if (loading()) {
+      <div class="loading"><lucide-icon class="spinner" name="loader-circle" [size]="23"></lucide-icon>Chargement des paramètres...</div>
+    } @else {
+      @switch (activeSection()) {
+        @case ('general') {
+          <section class="form-section">
+            <div class="section-heading"><h3>Identité de la plateforme</h3><p>Informations générales utilisées dans l’administration et les communications.</p></div>
+            <div class="form-grid">
+              <label>Nom de la plateforme<input [ngModel]="values().general.platformName" (ngModelChange)="updateSection('general', { platformName: $event })" /></label>
+              <label>Devise par défaut<select [ngModel]="values().general.defaultCurrency" (ngModelChange)="updateSection('general', { defaultCurrency: $event })"><option value="CDF">CDF</option><option value="USD">USD</option></select></label>
+              <label>Email de support<input type="email" [ngModel]="values().general.supportEmail" (ngModelChange)="updateSection('general', { supportEmail: $event })" /></label>
+              <label>Téléphone de support<input [ngModel]="values().general.supportPhone" (ngModelChange)="updateSection('general', { supportPhone: $event })" /></label>
+              <label>Fuseau horaire<select [ngModel]="values().general.timezone" (ngModelChange)="updateSection('general', { timezone: $event })"><option value="Africa/Lagos">Africa/Lagos</option><option value="Africa/Kinshasa">Africa/Kinshasa</option><option value="Africa/Lubumbashi">Africa/Lubumbashi</option><option value="UTC">UTC</option></select></label>
+            </div>
+            <label class="setting-toggle"><span><strong>Mode maintenance</strong><small>Masque temporairement l’application client.</small></span><input type="checkbox" [ngModel]="values().general.maintenanceMode" (ngModelChange)="updateSection('general', { maintenanceMode: $event })" /></label>
+          </section>
+        }
+        @case ('appearance') {
+          <section class="form-section">
+            <div class="section-heading"><h3>Apparence locale</h3><p>Ces préférences concernent uniquement ce navigateur.</p></div>
+            <div class="theme-options">
+              <button type="button" [class.active]="!darkMode()" (click)="themeChange.emit(false)"><span class="theme-preview light"></span><strong>Clair</strong><small>Contraste doux pour la journée</small></button>
+              <button type="button" [class.active]="darkMode()" (click)="themeChange.emit(true)"><span class="theme-preview dark"></span><strong>Sombre</strong><small>Confort visuel en faible lumière</small></button>
+            </div>
+          </section>
+        }
+        @case ('catalog') {
+          <section class="form-section">
+            <div class="section-heading"><h3>Publication du catalogue</h3><p>Contrôlez la mise en ligne des nouvelles ressources.</p></div>
+            <label class="setting-toggle"><span><strong>Publier automatiquement les services</strong><small>Les nouveaux services deviennent actifs immédiatement.</small></span><input type="checkbox" [ngModel]="values().catalog.autoPublishServices" (ngModelChange)="updateSection('catalog', { autoPublishServices: $event })" /></label>
+            <label class="setting-toggle"><span><strong>Publier automatiquement les produits</strong><small>Évite une validation manuelle après création.</small></span><input type="checkbox" [ngModel]="values().catalog.autoPublishProducts" (ngModelChange)="updateSection('catalog', { autoPublishProducts: $event })" /></label>
+            <label class="setting-toggle"><span><strong>Autoriser les commandes indisponibles</strong><small>Permet les demandes même sans disponibilité immédiate.</small></span><input type="checkbox" [ngModel]="values().catalog.allowOutOfStockOrders" (ngModelChange)="updateSection('catalog', { allowOutOfStockOrders: $event })" /></label>
+            <label class="number-field">Seuil d’alerte de disponibilité<input type="number" min="0" [ngModel]="values().catalog.lowStockThreshold" (ngModelChange)="updateSection('catalog', { lowStockThreshold: $event })" /></label>
+          </section>
+        }
+        @case ('orders') {
+          <section class="form-section">
+            <div class="section-heading"><h3>Cycle des commandes</h3><p>Définissez les références, validations et expirations.</p></div>
+            <div class="form-grid">
+              <label>Préfixe des références<input maxlength="8" [ngModel]="values().orders.referencePrefix" (ngModelChange)="updateSection('orders', { referencePrefix: $event })" /></label>
+              <label>Délai avant annulation (minutes)<input type="number" min="5" [ngModel]="values().orders.cancellationDelayMinutes" (ngModelChange)="updateSection('orders', { cancellationDelayMinutes: $event })" /></label>
+            </div>
+            <label class="setting-toggle"><span><strong>Annuler automatiquement les commandes impayées</strong><small>Libère les commandes après expiration du délai.</small></span><input type="checkbox" [ngModel]="values().orders.autoCancelUnpaid" (ngModelChange)="updateSection('orders', { autoCancelUnpaid: $event })" /></label>
+            <label class="setting-toggle"><span><strong>Confirmation administrateur obligatoire</strong><small>Chaque commande doit être examinée avant traitement.</small></span><input type="checkbox" [ngModel]="values().orders.requireAdminConfirmation" (ngModelChange)="updateSection('orders', { requireAdminConfirmation: $event })" /></label>
+          </section>
+        }
+        @case ('payments') {
+          <section class="form-section">
+            <div class="section-heading"><h3>Règles de paiement</h3><p>Configurez les devises acceptées et la vérification.</p></div>
+            <div class="currency-options">
+              <label><input type="checkbox" [checked]="values().payments.enabledCurrencies.includes('CDF')" (change)="toggleCurrency('CDF', $any($event.target).checked)" />CDF</label>
+              <label><input type="checkbox" [checked]="values().payments.enabledCurrencies.includes('USD')" (change)="toggleCurrency('USD', $any($event.target).checked)" />USD</label>
+            </div>
+            <label class="number-field">Expiration d’une tentative (minutes)<input type="number" min="5" [ngModel]="values().payments.paymentTimeoutMinutes" (ngModelChange)="updateSection('payments', { paymentTimeoutMinutes: $event })" /></label>
+            <label class="setting-toggle"><span><strong>Vérification manuelle</strong><small>Les paiements restent en attente avant validation admin.</small></span><input type="checkbox" [ngModel]="values().payments.manualVerification" (ngModelChange)="updateSection('payments', { manualVerification: $event })" /></label>
+          </section>
+        }
+        @case ('notifications') {
+          <section class="form-section">
+            <div class="section-heading"><h3>Alertes administrateur</h3><p>Choisissez les événements qui doivent déclencher une notification.</p></div>
+            <label>Adresse de réception<input type="email" [ngModel]="values().notifications.adminEmail" (ngModelChange)="updateSection('notifications', { adminEmail: $event })" /></label>
+            <label class="setting-toggle"><span><strong>Nouvelle commande</strong><small>Alerte dès qu’un achat est créé.</small></span><input type="checkbox" [ngModel]="values().notifications.notifyNewOrder" (ngModelChange)="updateSection('notifications', { notifyNewOrder: $event })" /></label>
+            <label class="setting-toggle"><span><strong>Nouvelle demande</strong><small>Alerte pour les formulaires dynamiques.</small></span><input type="checkbox" [ngModel]="values().notifications.notifyNewSubmission" (ngModelChange)="updateSection('notifications', { notifyNewSubmission: $event })" /></label>
+            <label class="setting-toggle"><span><strong>Échec de paiement</strong><small>Alerte lorsqu’un paiement échoue.</small></span><input type="checkbox" [ngModel]="values().notifications.notifyPaymentFailure" (ngModelChange)="updateSection('notifications', { notifyPaymentFailure: $event })" /></label>
+            <label class="setting-toggle"><span><strong>Résumé quotidien</strong><small>Envoie chaque matin une synthèse des opérations.</small></span><input type="checkbox" [ngModel]="values().notifications.dailyDigest" (ngModelChange)="updateSection('notifications', { dailyDigest: $event })" /></label>
+            <button class="secondary-action" type="button" [disabled]="saving()" (click)="sendTestEmail()"><lucide-icon name="send" [size]="16"></lucide-icon>Envoyer un test</button>
+          </section>
+        }
+        @case ('security') {
+          <section class="form-section">
+            <div class="section-heading"><h3>Protection de l’administration</h3><p>Renforcez les sessions et limitez les accès sensibles.</p></div>
+            <div class="form-grid">
+              <label>Inactivité maximale (minutes)<input type="number" min="5" [ngModel]="values().security.sessionIdleMinutes" (ngModelChange)="updateSection('security', { sessionIdleMinutes: $event })" /></label>
+              <label>Tentatives de connexion<input type="number" min="1" [ngModel]="values().security.maxLoginAttempts" (ngModelChange)="updateSection('security', { maxLoginAttempts: $event })" /></label>
+            </div>
+            <label class="setting-toggle"><span><strong>Double authentification obligatoire</strong><small>Exige un second facteur pour tous les administrateurs.</small></span><input type="checkbox" [ngModel]="values().security.requireTwoFactor" (ngModelChange)="updateSection('security', { requireTwoFactor: $event })" /></label>
+            <label>Adresses IP autorisées<textarea rows="5" [ngModel]="allowedIpsText()" (ngModelChange)="allowedIpsText.set($event)" placeholder="Une adresse IP par ligne. Laissez vide pour ne pas filtrer."></textarea></label>
+          </section>
+        }
+        @case ('storage') {
+          <section class="form-section">
+            <div class="section-heading"><h3>Traitement des images</h3><p>Limitez les fichiers et contrôlez leur optimisation.</p></div>
+            <div class="form-grid">
+              <label>Taille maximale (Mo)<input type="number" min="1" max="50" [ngModel]="values().storage.maxImageSizeMb" (ngModelChange)="updateSection('storage', { maxImageSizeMb: $event })" /></label>
+              <label>Qualité d’image<input type="number" min="40" max="100" [ngModel]="values().storage.imageQuality" (ngModelChange)="updateSection('storage', { imageQuality: $event })" /></label>
+            </div>
+            <label class="setting-toggle"><span><strong>Générer une version WebP</strong><small>Optimise automatiquement les images téléversées.</small></span><input type="checkbox" [ngModel]="values().storage.generateWebp" (ngModelChange)="updateSection('storage', { generateWebp: $event })" /></label>
+            <div class="file-types"><strong>Formats autorisés</strong><span>JPEG</span><span>PNG</span><span>WebP</span><span>AVIF</span></div>
+          </section>
+        }
+        @case ('maintenance') {
+          <section class="form-section">
+            <div class="section-heading"><h3>Outils de maintenance</h3><p>Actions techniques ponctuelles pour garder l’application cohérente.</p></div>
+            <div class="maintenance-action"><span><lucide-icon name="database-zap" [size]="20"></lucide-icon></span><div><strong>Vider le cache applicatif</strong><small>Force le rechargement des données mises en cache côté serveur.</small></div><button type="button" [disabled]="saving()" (click)="clearCache()">Vider le cache</button></div>
+            <div class="maintenance-action disabled"><span><lucide-icon name="search-check" [size]="20"></lucide-icon></span><div><strong>Réindexer la recherche</strong><small>Disponible lorsque l’endpoint de réindexation sera exposé.</small></div><button type="button" disabled>Indisponible</button></div>
+          </section>
+        }
+      }
+    }
+
+    @if (error()) {
+      <div class="settings-error"><lucide-icon name="circle-alert" [size]="17"></lucide-icon>{{ error() }}</div>
+    }
+
+    @if (activeSection() !== 'maintenance') {
+      <footer>
+        <span>{{ endpointMissing() && activeSection() !== 'appearance' ? 'La sauvegarde attend le backend.' : 'Les changements seront appliqués immédiatement.' }}</span>
+        <button type="button" [disabled]="saving()" (click)="save()"><lucide-icon [name]="saving() ? 'loader-circle' : 'save'" [class.spinner]="saving()" [size]="17"></lucide-icon>{{ saving() ? 'Enregistrement...' : 'Enregistrer' }}</button>
+      </footer>
+    }
+  </article>
+</section>

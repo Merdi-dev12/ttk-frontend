@@ -1,0 +1,53 @@
+<section class="toolbar">
+  <label><lucide-icon name="search" [size]="17"></lucide-icon><input [ngModel]="search()" (ngModelChange)="setFilter($event)" [placeholder]="mode() === 'services' ? 'Rechercher un service...' : mode() === 'products' ? 'Rechercher un produit...' : 'Nom ou adresse email...'" /></label>
+  <select [ngModel]="status()" (ngModelChange)="setStatus($event)" aria-label="Filtrer par statut">
+    <option>Tous</option><option>Actif</option>
+    @if (mode() === 'users') { <option>Révoqué</option> } @else { <option>Suspendu</option><option>Supprimé</option> }
+  </select>
+</section>
+
+@if (mode() === 'services') {
+  <section class="service-grid text-sm">
+    @for (item of pageItems(); track $any(item).id) {
+      @let service = $any(item);
+      <article>
+        <header><span class="service-icon" [class.form]="service.type === 'FORM'"><lucide-icon [name]="service.type === 'PRODUCTS' ? 'package' : 'file-text'" [size]="23"></lucide-icon></span><span class="status text-xs!" [attr.data-tone]="statusTone(catalogStatus(service.status))">{{ catalogStatus(service.status) }}</span></header>
+        <div class="service-copy"><h2 class="text-base! font-bold">{{ service.name }}</h2><p class="text-sm! leading-5">{{ service.description || 'Aucune description.' }}</p></div>
+        <div class="service-meta"><span><small class="text-xs!">Type</small><strong class="text-sm!">{{ service.type === 'PRODUCTS' ? 'Produits' : 'Formulaire' }}</strong></span><span><small class="text-xs!">Produits</small><strong class="text-sm!">{{ service.type === 'PRODUCTS' ? serviceProducts(service.id).length : '—' }}</strong></span><span><small class="text-xs!">Mis à jour</small><strong class="text-sm!">{{ formatDate(service.updated_at) }}</strong></span></div>
+        <footer><button class="text-sm!" type="button" (click)="inspectService.emit(service)"><lucide-icon name="eye" [size]="16"></lucide-icon>Gérer</button><button class="icon-action" type="button" [disabled]="service.status === 'DELETED'" (click)="serviceStatusChange.emit(service)" [attr.aria-label]="service.status === 'ACTIVE' ? 'Suspendre' : 'Réactiver'"><lucide-icon [name]="service.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="16"></lucide-icon></button></footer>
+      </article>
+    } @empty {
+      <div class="empty"><lucide-icon name="search" [size]="26"></lucide-icon><strong>Aucun service trouvé</strong><span>Essayez un autre terme ou retirez un filtre.</span></div>
+    }
+  </section>
+} @else {
+  <section class="table-panel">
+    <div class="table-scroll">
+      <table class="text-sm">
+        @if (mode() === 'products') {
+          <thead class="text-xs!"><tr><th>Produit</th><th>Service</th><th>Modalités</th><th>Prix</th><th>Statut</th><th>Note admin</th><th>Action</th></tr></thead>
+          <tbody>
+            @for (item of pageItems(); track $any(item).id) {
+              @let product = $any(item);
+              <tr class="text-sm!"><td><div class="identity"><span class="text-sm!">{{ product.name.slice(0, 1) }}</span><strong class="text-sm!">{{ product.name }}</strong></div></td><td>{{ serviceName(product.service_id) }}</td><td>{{ product.modalities.length }}</td><td><strong>{{ productPrice(product) }}</strong></td><td><span class="status text-xs!" [attr.data-tone]="statusTone(catalogStatus(product.status))">{{ catalogStatus(product.status) }}</span></td><td class="note text-sm!">{{ product.admin_note || '—' }}</td><td><button class="table-action text-sm!" type="button" (click)="productStatusChange.emit({ product, status: product.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' })"><lucide-icon [name]="product.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="15"></lucide-icon>{{ product.status === 'ACTIVE' ? 'Suspendre' : 'Réactiver' }}</button></td></tr>
+            } @empty { <tr><td colspan="7"><div class="empty-row">Aucun produit disponible.</div></td></tr> }
+          </tbody>
+        } @else {
+          <thead><tr><th>Utilisateur</th><th>Inscription</th><th>Rôle</th><th>Statut</th><th>Accès</th></tr></thead>
+          <tbody>
+            @for (item of pageItems(); track $any(item).id) {
+              @let user = $any(item);
+              <tr><td><div class="identity user"><span>{{ userInitials(user) }}</span><div><strong>{{ userName(user) }}</strong><small>{{ user.email }}</small></div></div></td><td>{{ formatDate(user.created_at) }}</td><td>{{ user.role }}</td><td><span class="status" [attr.data-tone]="statusTone(userStatus(user.status))">{{ userStatus(user.status) }}</span></td><td><button class="table-action" type="button" (click)="userStatusChange.emit(user)"><lucide-icon [name]="user.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="15"></lucide-icon>{{ user.status === 'ACTIVE' ? 'Révoquer' : 'Réactiver' }}</button></td></tr>
+            }
+          </tbody>
+        }
+      </table>
+    </div>
+  </section>
+}
+
+<footer class="pagination text-sm!">
+  <span>{{ filteredItems().length }} résultat(s)</span>
+  <label>Afficher<select [ngModel]="pageSize()" (ngModelChange)="setPageSize($event)"><option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="20">20</option></select></label>
+  <div><button type="button" [disabled]="page() === 1" aria-label="Page précédente" (click)="changePage(-1)"><lucide-icon name="chevron-left" [size]="17"></lucide-icon></button><strong>{{ page() }} / {{ totalPages() }}</strong><button type="button" [disabled]="page() === totalPages()" aria-label="Page suivante" (click)="changePage(1)"><lucide-icon name="chevron-right" [size]="17"></lucide-icon></button></div>
+</footer>

@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { ADMIN_ROUTES } from '../constants/admin-routes';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
@@ -27,7 +28,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         }))),
         catchError((refreshError) => {
           auth.clearSession();
-          void router.navigate(['/login']);
+          void router.navigateByUrl(ADMIN_ROUTES.login);
           return throwError(() => refreshError);
         })
       );

@@ -1,0 +1,63 @@
+@if (error()) {
+  <div class="storage-alert"><lucide-icon name="circle-alert" [size]="18"></lucide-icon><div><strong>Connexion Storage requise</strong><p>{{ error() }}</p></div></div>
+}
+
+<section class="storage-layout">
+  <aside class="storage-sidebar">
+    <header><div><small>Espaces</small><h2>Buckets</h2></div><span>{{ buckets().length }}</span></header>
+    <form (ngSubmit)="createBucket()">
+      <input [ngModel]="newBucketName()" (ngModelChange)="newBucketName.set($event)" name="bucketName" placeholder="Nouveau bucket" />
+      <button type="submit" [disabled]="!newBucketName().trim() || loading()" aria-label="Créer le bucket"><lucide-icon name="folder-plus" [size]="18"></lucide-icon></button>
+    </form>
+    <div class="bucket-list">
+      @for (bucket of buckets(); track bucket.id) {
+        <button type="button" [class.active]="selectedBucketId() === bucket.id" (click)="selectBucket(bucket.id)">
+          <span><lucide-icon name="folder-open" [size]="18"></lucide-icon></span>
+          <div><strong>{{ bucket.name }}</strong><small>{{ bucket.objects_count ?? 0 }} fichier(s)</small></div>
+          <lucide-icon name="chevron-right" [size]="16"></lucide-icon>
+        </button>
+      } @empty {
+        <p class="empty-buckets">Créez un bucket pour organiser vos images.</p>
+      }
+    </div>
+  </aside>
+
+  <div class="storage-main">
+    <div class="toolbar">
+      <label><lucide-icon name="search" [size]="17"></lucide-icon><input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Rechercher une image..." /></label>
+      <div>
+        @if (selectedBucket()) {
+          <span class="bucket-name"><lucide-icon name="folder-open" [size]="15"></lucide-icon>{{ selectedBucket()!.name }}</span>
+        }
+        <label class="upload-button" [class.disabled]="!selectedBucketId() || uploading()">
+          <lucide-icon [name]="uploading() ? 'loader-circle' : 'upload'" [class.spinner]="uploading()" [size]="17"></lucide-icon>
+          {{ uploading() ? 'Téléversement...' : 'Téléverser' }}
+          <input type="file" accept="image/*" [disabled]="!selectedBucketId() || uploading()" (change)="upload($event)" />
+        </label>
+      </div>
+    </div>
+
+    @if (loading() && objects().length === 0) {
+      <div class="state"><lucide-icon class="spinner" name="loader-circle" [size]="25"></lucide-icon><strong>Chargement des médias...</strong></div>
+    } @else if (!selectedBucketId()) {
+      <div class="state"><lucide-icon name="hard-drive-upload" [size]="29"></lucide-icon><strong>Aucun bucket sélectionné</strong><p>Créez un bucket pour commencer.</p></div>
+    } @else {
+      <section class="media-grid">
+        @for (object of filteredObjects(); track object.id) {
+          <article>
+            <div class="preview"><img [src]="object.url" [alt]="object.name" loading="lazy" /></div>
+            <footer>
+              <div><strong>{{ object.name }}</strong><small>{{ object.mime_type }} · {{ object.size / 1024 | number:'1.0-0' }} Ko</small></div>
+              <span>
+                <button type="button" aria-label="Copier l’URL" title="Copier l’URL" (click)="copyUrl(object)"><lucide-icon name="copy" [size]="15"></lucide-icon></button>
+                <button class="danger" type="button" aria-label="Supprimer" title="Supprimer" (click)="remove(object)"><lucide-icon name="trash-2" [size]="15"></lucide-icon></button>
+              </span>
+            </footer>
+          </article>
+        } @empty {
+          <div class="state"><lucide-icon name="image" [size]="29"></lucide-icon><strong>Aucune image</strong><p>Téléversez la première image de ce bucket.</p></div>
+        }
+      </section>
+    }
+  </div>
+</section>

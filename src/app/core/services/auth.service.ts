@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
 import { environment } from '../environments/environment';
 import { ApiResponse, ApiUser, LoginResponseData } from '../models/api.models';
+import { ADMIN_ROUTES } from '../constants/admin-routes';
 
 const REFRESH_TOKEN_KEY = 'ttk_admin_refresh_token';
 const LAST_ACTIVITY_KEY = 'ttk_admin_last_activity';
@@ -127,7 +128,7 @@ export class AuthService {
       catchError(() => of(undefined)),
       tap(() => {
         this.clearSession();
-        void this.router.navigate(['/login']);
+        void this.router.navigateByUrl(ADMIN_ROUTES.login);
       }),
       map(() => undefined)
     );
@@ -151,7 +152,7 @@ export class AuthService {
     if (!this.refreshToken) return;
     if (this.isSessionIdle()) {
       this.clearSession();
-      void this.router.navigate(['/login']);
+      void this.router.navigateByUrl(ADMIN_ROUTES.login);
       return;
     }
     const now = Date.now();

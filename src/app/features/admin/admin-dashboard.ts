@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   BadgeCheck,
   Bell,
+  BellRing,
   Braces,
   BriefcaseBusiness,
   Building2,
@@ -28,7 +29,9 @@ import {
   CirclePause,
   CirclePlay,
   Clock3,
+  Copy,
   CreditCard,
+  DatabaseZap,
   Download,
   Ellipsis,
   Eye,
@@ -36,6 +39,9 @@ import {
   FileCheck,
   FileText,
   Filter,
+  FolderOpen,
+  FolderPlus,
+  HardDriveUpload,
   Image,
   Inbox,
   Landmark,
@@ -50,25 +56,33 @@ import {
   Menu,
   Moon,
   Package,
+  PackageSearch,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
   Pencil,
   Plus,
+  PlugZap,
   ReceiptText,
   RotateCcw,
   Save,
   Search,
+  SearchCheck,
+  Send,
   Settings,
+  Settings2,
   ShieldCheck,
   ShoppingCart,
   SlidersHorizontal,
   Sun,
   Trash2,
   TrendingUp,
+  Upload,
   UserRoundCheck,
   Users,
   WalletCards,
   WifiOff,
+  Wrench,
   X
 } from 'lucide-angular';
 import { finalize, forkJoin, switchMap } from 'rxjs';
@@ -82,9 +96,20 @@ import {
   CreateFieldPayload,
   Currency,
   FieldType,
-  ServiceType
+  ServiceType,
+  StorageBucket,
+  StorageObject
 } from '../../core/models/api.models';
 import { AuthService } from '../../core/services/auth.service';
+import { StorageApiService } from '../../core/services/storage-api.service';
+import { Overview } from './pages/overview/overview';
+import { Catalog } from './pages/catalog/catalog';
+import { Settings as SettingsPage } from './pages/settings/settings';
+import { Storage } from './pages/storage/storage';
+import {
+  CatalogDialogs,
+  CatalogDialogType,
+} from './ui/catalog-dialogs/catalog-dialogs';
 
 export const ADMIN_ICONS = {
   Activity,
@@ -92,6 +117,7 @@ export const ADMIN_ICONS = {
   ArrowUpRight,
   BadgeCheck,
   Bell,
+  BellRing,
   Braces,
   BriefcaseBusiness,
   Building2,
@@ -106,7 +132,9 @@ export const ADMIN_ICONS = {
   CirclePause,
   CirclePlay,
   Clock3,
+  Copy,
   CreditCard,
+  DatabaseZap,
   Download,
   Ellipsis,
   Eye,
@@ -114,6 +142,9 @@ export const ADMIN_ICONS = {
   FileCheck,
   FileText,
   Filter,
+  FolderOpen,
+  FolderPlus,
+  HardDriveUpload,
   Image,
   Inbox,
   Landmark,
@@ -127,25 +158,33 @@ export const ADMIN_ICONS = {
   Menu,
   Moon,
   Package,
+  PackageSearch,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
   Pencil,
   Plus,
+  PlugZap,
   ReceiptText,
   RotateCcw,
   Save,
   Search,
+  SearchCheck,
+  Send,
   Settings,
+  Settings2,
   ShieldCheck,
   ShoppingCart,
   SlidersHorizontal,
   Sun,
   Trash2,
   TrendingUp,
+  Upload,
   UserRoundCheck,
   Users,
   WalletCards,
   WifiOff,
+  Wrench,
   X
 };
 
@@ -158,6 +197,7 @@ type SectionId =
   | 'invoices'
   | 'submissions'
   | 'users'
+  | 'storage'
   | 'advertising'
   | 'settings';
 
@@ -195,13 +235,23 @@ interface ProductModalityForm {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    Overview,
+    Catalog,
+    SettingsPage,
+    Storage,
+    CatalogDialogs,
+  ],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminDashboardComponent implements OnInit {
   private readonly api = inject(AdminApiService);
+  private readonly storageApi = inject(StorageApiService);
   readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -215,7 +265,7 @@ export class AdminDashboardComponent implements OnInit {
   statusFilter = 'Tous';
   tablePage = 1;
   tablePageSize = 10;
-  modalType: ModalType | null = null;
+  modalType: CatalogDialogType = null;
   toastMessage = '';
   toastIsError = false;
   errorMessage = '';
@@ -223,10 +273,19 @@ export class AdminDashboardComponent implements OnInit {
   submitting = false;
   loggingOut = false;
   selectedService: AdminService | null = null;
+  storageLoading = false;
+  storageUploading = false;
+  storageError = '';
+  newBucketName = '';
+  selectedBucketId = '';
+  mediaPickerOpen = false;
+  private mediaTarget: { type: 'service' } | { type: 'product'; index: number } | null = null;
 
   services: AdminService[] = [];
   products: AdminProduct[] = [];
   users: ApiUser[] = [];
+  storageBuckets: StorageBucket[] = [];
+  storageObjects: StorageObject[] = [];
 
   serviceForm = this.newServiceForm();
   productForm = this.newProductForm();
@@ -253,8 +312,9 @@ export class AdminDashboardComponent implements OnInit {
   readonly secondaryNavigation: NavigationItem[] = [
     { id: 'submissions', label: 'Demandes', icon: 'inbox', apiReady: false },
     { id: 'users', label: 'Utilisateurs', icon: 'users', apiReady: true },
-    { id: 'advertising', label: 'Publicités', icon: 'megaphone', apiReady: false },
-    { id: 'settings', label: 'Paramètres', icon: 'settings', apiReady: false }
+    { id: 'storage', label: 'Storage', icon: 'hard-drive-upload', apiReady: true },
+    { id: 'advertising', label: 'Annonces & Publicités', icon: 'megaphone', apiReady: false },
+    { id: 'settings', label: 'Paramètres', icon: 'settings', apiReady: true }
   ];
 
   readonly chartBars = [38, 52, 48, 66, 58, 78, 72, 88, 74, 92, 84, 96];
@@ -267,6 +327,7 @@ export class AdminDashboardComponent implements OnInit {
     invoices: { title: 'Factures', eyebrow: 'Transactions', description: 'Retrouvez les factures générées après chaque paiement.' },
     submissions: { title: 'Demandes', eyebrow: 'Formulaires', description: 'Traitez les soumissions envoyées depuis les services formulaire.' },
     users: { title: 'Utilisateurs', eyebrow: 'Communauté', description: 'Consultez les comptes et gérez leur accès à la plateforme.' },
+    storage: { title: 'Storage', eyebrow: 'Médias', description: 'Centralisez les images utilisées par les services, produits et campagnes.' },
     advertising: { title: 'Publicités', eyebrow: 'Contenu', description: 'Planifiez les campagnes visibles sur l’accueil client.' },
     settings: { title: 'Paramètres', eyebrow: 'Configuration', description: 'Adaptez les préférences globales de la plateforme.' }
   };
@@ -378,6 +439,16 @@ export class AdminDashboardComponent implements OnInit {
     return this.users.filter((item) => item.status === 'REVOKED').length;
   }
 
+  get selectedStorageBucket(): StorageBucket | null {
+    return this.storageBuckets.find((bucket) => bucket.id === this.selectedBucketId) ?? null;
+  }
+
+  get filteredStorageObjects(): StorageObject[] {
+    return this.storageObjects.filter((object) =>
+      this.matchesSearch(object.name, object.object_key)
+    );
+  }
+
   navigate(section: SectionId): void {
     this.activeSection = section;
     this.mobileMenuOpen = false;
@@ -385,6 +456,9 @@ export class AdminDashboardComponent implements OnInit {
     this.statusFilter = 'Tous';
     this.tablePage = 1;
     this.closePopovers();
+    if (section === 'storage' && this.storageBuckets.length === 0) {
+      this.loadStorage();
+    }
   }
 
   resetTablePage(): void {
@@ -412,8 +486,17 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   toggleTheme(): void {
-    this.darkMode = !this.darkMode;
-    localStorage.setItem('ttk_admin_theme', this.darkMode ? 'dark' : 'light');
+    this.setTheme(!this.darkMode);
+  }
+
+  setTheme(darkMode: boolean): void {
+    this.darkMode = darkMode;
+    localStorage.setItem('ttk_admin_theme', darkMode ? 'dark' : 'light');
+    this.cdr.markForCheck();
+  }
+
+  handleChildToast(event: { message: string; error?: boolean }): void {
+    this.showToast(event.message, event.error ?? false);
   }
 
   logout(): void {
@@ -427,10 +510,26 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   openCreateModal(type: ModalType): void {
+    if (type === 'advertising') {
+      this.showToast('Le backend des publicités n’est pas encore disponible.', true);
+      return;
+    }
     this.errorMessage = '';
     this.modalType = type;
     if (type === 'service') this.serviceForm = this.newServiceForm();
     if (type === 'product') this.productForm = this.newProductForm();
+  }
+
+  onServiceCreated(service: AdminService): void {
+    this.services = [service, ...this.services];
+    this.modalType = null;
+    this.showToast(`Le service « ${service.name} » a été créé.`);
+  }
+
+  onProductCreated(product: AdminProduct): void {
+    this.products = [product, ...this.products];
+    this.modalType = null;
+    this.showToast(`Le produit « ${product.name} » a été créé.`);
   }
 
   closeModal(): void {
@@ -464,6 +563,112 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  openMediaPicker(target: 'service' | 'product', index = 0): void {
+    this.mediaTarget =
+      target === 'service' ? { type: 'service' } : { type: 'product', index };
+    this.mediaPickerOpen = true;
+    this.storageError = '';
+    if (this.storageBuckets.length === 0) this.loadStorage();
+  }
+
+  closeMediaPicker(): void {
+    if (this.storageUploading) return;
+    this.mediaPickerOpen = false;
+    this.mediaTarget = null;
+  }
+
+  selectStorageBucket(bucketId: string): void {
+    this.selectedBucketId = bucketId;
+    this.storageObjects = [];
+    this.loadStorageObjects(bucketId);
+  }
+
+  createStorageBucket(): void {
+    const name = this.newBucketName.trim();
+    if (!name || this.storageLoading) return;
+
+    this.storageLoading = true;
+    this.storageError = '';
+    this.storageApi.createBucket(name).pipe(finalize(() => {
+      this.storageLoading = false;
+      this.cdr.markForCheck();
+    })).subscribe({
+      next: (bucket) => {
+        this.storageBuckets = [...this.storageBuckets, bucket];
+        this.newBucketName = '';
+        this.selectStorageBucket(bucket.id);
+        this.showToast(`Le bucket « ${bucket.name} » a été créé.`);
+      },
+      error: (error) => this.handleStorageError(error)
+    });
+  }
+
+  uploadStorageFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || !this.selectedBucketId || this.storageUploading) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.storageError = 'Sélectionnez un fichier image.';
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      this.storageError = 'L’image ne doit pas dépasser 10 Mo.';
+      return;
+    }
+
+    this.storageUploading = true;
+    this.storageError = '';
+    this.storageApi.upload(this.selectedBucketId, file).pipe(finalize(() => {
+      this.storageUploading = false;
+      this.cdr.markForCheck();
+    })).subscribe({
+      next: (object) => {
+        this.storageObjects = [object, ...this.storageObjects];
+        this.storageBuckets = this.storageBuckets.map((bucket) =>
+          bucket.id === object.bucket_id
+            ? { ...bucket, objects_count: (bucket.objects_count ?? 0) + 1 }
+            : bucket
+        );
+        this.showToast('Image téléversée dans Storage.');
+      },
+      error: (error) => this.handleStorageError(error)
+    });
+  }
+
+  chooseStorageObject(object: StorageObject): void {
+    if (!this.mediaTarget) return;
+
+    if (this.mediaTarget.type === 'service') {
+      this.serviceForm.imageUrl = object.url;
+    } else {
+      this.productForm.images[this.mediaTarget.index].url = object.url;
+    }
+    this.showToast('Image ajoutée au formulaire.');
+    this.closeMediaPicker();
+  }
+
+  copyStorageUrl(object: StorageObject): void {
+    void navigator.clipboard.writeText(object.url).then(
+      () => this.showToast('URL copiée.'),
+      () => this.showToast('Impossible de copier l’URL.', true)
+    );
+  }
+
+  removeStorageObject(object: StorageObject): void {
+    if (!window.confirm(`Supprimer définitivement « ${object.name} » ?`)) return;
+
+    this.storageApi.deleteObject(object.bucket_id, object.id).subscribe({
+      next: () => {
+        this.storageObjects = this.storageObjects.filter((item) => item.id !== object.id);
+        this.showToast('Image supprimée de Storage.');
+        this.cdr.markForCheck();
+      },
+      error: (error) => this.handleStorageError(error)
+    });
+  }
+
   addProductModality(): void {
     this.productForm.modalities.push(this.newProductModality());
   }
@@ -475,7 +680,6 @@ export class AdminDashboardComponent implements OnInit {
   createItem(): void {
     if (this.modalType === 'service') this.createService();
     if (this.modalType === 'product') this.createProduct();
-    if (this.modalType === 'advertising') this.showToast('Le backend des publicités n’est pas encore disponible.');
   }
 
   toggleServiceStatus(service: AdminService): void {
@@ -602,6 +806,49 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (error) => this.handleError(error, 'Impossible de charger les données administrateur.')
     });
+  }
+
+  private loadStorage(): void {
+    this.storageLoading = true;
+    this.storageError = '';
+    this.storageApi.listBuckets().pipe(finalize(() => {
+      this.storageLoading = false;
+      this.cdr.markForCheck();
+    })).subscribe({
+      next: (buckets) => {
+        this.storageBuckets = buckets;
+        if (buckets.length > 0) {
+          this.selectStorageBucket(this.selectedBucketId || buckets[0].id);
+        }
+      },
+      error: (error) => this.handleStorageError(error)
+    });
+  }
+
+  private loadStorageObjects(bucketId: string): void {
+    this.storageLoading = true;
+    this.storageError = '';
+    this.storageApi.listObjects(bucketId).pipe(finalize(() => {
+      this.storageLoading = false;
+      this.cdr.markForCheck();
+    })).subscribe({
+      next: (objects) => {
+        this.storageObjects = objects;
+        this.cdr.markForCheck();
+      },
+      error: (error) => this.handleStorageError(error)
+    });
+  }
+
+  private handleStorageError(error: {
+    status?: number;
+    error?: Partial<ApiErrorResponse>;
+    message?: string;
+  }): void {
+    this.storageError = error.status === 404
+      ? 'Le module Storage attend encore ses endpoints backend.'
+      : error.error?.message ?? error.message ?? 'Storage est momentanément indisponible.';
+    this.cdr.markForCheck();
   }
 
   private createService(): void {

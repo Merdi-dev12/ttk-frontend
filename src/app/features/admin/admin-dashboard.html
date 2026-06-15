@@ -143,205 +143,38 @@
       } @else {
         @switch (activeSection) {
           @case ('dashboard') {
-            <section class="stats-grid">
-              @for (stat of stats; track stat.label) {
-                <article class="stat-card">
-                  <div class="stat-card-top"><span class="stat-icon" [attr.data-tone]="stat.tone"><lucide-icon [name]="stat.icon" [size]="20"></lucide-icon></span></div>
-                  <p>{{ stat.label }}</p><strong>{{ stat.value }}</strong><small>{{ stat.detail }}</small>
-                </article>
-              }
-            </section>
-
-            <section class="dashboard-grid">
-              <article class="panel revenue-panel">
-                <div class="panel-heading"><div><span class="panel-kicker">Catalogue</span><h2>Répartition des ressources</h2></div><div class="legend"><span></span>Données backend</div></div>
-                <div class="resource-summary">
-                  <div><strong>{{ productServices.length }}</strong><small>services produits</small></div>
-                  <div><strong>{{ services.length - productServices.length }}</strong><small>services formulaire</small></div>
-                  <div><strong>{{ products.length }}</strong><small>produits configurés</small></div>
-                </div>
-                <div class="bar-chart" aria-label="Aperçu visuel du catalogue">
-                  @for (bar of chartBars; track $index) {
-                    <div class="bar-column"><div class="bar-track"><span [style.height.%]="bar"></span></div><small>{{ ['J','F','M','A','M','J','J','A','S','O','N','D'][$index] }}</small></div>
-                  }
-                </div>
-              </article>
-
-              <article class="panel attention-panel">
-                <div class="panel-heading"><div><span class="panel-kicker">État</span><h2>Centre d’attention</h2></div></div>
-                <button class="attention-row" type="button" (click)="navigate('services')">
-                  <span class="attention-icon amber"><lucide-icon name="circle-pause" [size]="19"></lucide-icon></span>
-                  <span><strong>Services suspendus</strong><small>Masqués du catalogue public</small></span>
-                  <b>{{ suspendedServiceCount }}</b><lucide-icon name="chevron-right" [size]="17"></lucide-icon>
-                </button>
-                <button class="attention-row" type="button" (click)="navigate('products')">
-                  <span class="attention-icon blue"><lucide-icon name="package" [size]="19"></lucide-icon></span>
-                  <span><strong>Produits suspendus</strong><small>Réactivation disponible</small></span>
-                  <b>{{ suspendedProductCount }}</b><lucide-icon name="chevron-right" [size]="17"></lucide-icon>
-                </button>
-                <button class="attention-row" type="button" (click)="navigate('products')">
-                  <span class="attention-icon coral"><lucide-icon name="trash-2" [size]="19"></lucide-icon></span>
-                  <span><strong>Produits supprimés</strong><small>Restauration possible</small></span>
-                  <b>{{ deletedProductCount }}</b><lucide-icon name="chevron-right" [size]="17"></lucide-icon>
-                </button>
-                <button class="attention-row" type="button" (click)="navigate('users')">
-                  <span class="attention-icon mint"><lucide-icon name="users" [size]="19"></lucide-icon></span>
-                  <span><strong>Comptes révoqués</strong><small>Historique conservé</small></span>
-                  <b>{{ revokedUserCount }}</b><lucide-icon name="chevron-right" [size]="17"></lucide-icon>
-                </button>
-              </article>
-            </section>
-
-            <section class="panel table-panel">
-              <div class="panel-heading table-heading"><div><span class="panel-kicker">Catalogue réel</span><h2>Services récemment mis à jour</h2></div><button class="text-button" type="button" (click)="navigate('services')">Voir tous <lucide-icon name="arrow-up-right" [size]="15"></lucide-icon></button></div>
-              <div class="table-scroll">
-                <table>
-                  <thead><tr><th>Service</th><th>Type</th><th>Ressources</th><th>Statut</th><th>Mise à jour</th><th></th></tr></thead>
-                  <tbody>
-                    @for (service of services.slice(0, 5); track service.id) {
-                      <tr>
-                        <td><strong>{{ service.name }}</strong></td>
-                        <td>{{ serviceTypeLabel(service.type) }}</td>
-                        <td>{{ service.type === 'PRODUCTS' ? serviceProducts(service.id).length + ' produit(s)' : 'Formulaire dynamique' }}</td>
-                        <td><span class="status-badge" [attr.data-tone]="statusTone(serviceStatusLabel(service.status))">{{ serviceStatusLabel(service.status) }}</span></td>
-                        <td class="muted-cell">{{ formatDate(service.updated_at) }}</td>
-                        <td><button class="quiet-icon" type="button" aria-label="Gérer le service" (click)="inspectService(service)"><lucide-icon name="chevron-right" [size]="17"></lucide-icon></button></td>
-                      </tr>
-                    } @empty {
-                      <tr><td colspan="6"><div class="inline-empty">Aucun service n’a encore été créé.</div></td></tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <section class="quick-grid">
-              <article class="quick-card"><span class="quick-icon mint"><lucide-icon name="briefcase-business" [size]="22"></lucide-icon></span><div><h3>Configurer un service</h3><p>Créez un catalogue produit ou un formulaire sur mesure.</p></div><button class="button secondary-button" type="button" (click)="openCreateModal('service')">Commencer <lucide-icon name="arrow-right" [size]="16"></lucide-icon></button></article>
-              <article class="quick-card"><span class="quick-icon blue"><lucide-icon name="package" [size]="22"></lucide-icon></span><div><h3>Ajouter un produit</h3><p>Ajoutez ses images, modalités, prix et disponibilités.</p></div><button class="button secondary-button" type="button" [disabled]="productServices.length === 0" (click)="openCreateModal('product')">Ajouter <lucide-icon name="arrow-right" [size]="16"></lucide-icon></button></article>
-              <article class="quick-card"><span class="quick-icon coral"><lucide-icon name="users" [size]="22"></lucide-icon></span><div><h3>Gérer les utilisateurs</h3><p>Révoquez ou réactivez les comptes depuis l’API.</p></div><button class="button secondary-button" type="button" (click)="navigate('users')">Consulter <lucide-icon name="arrow-right" [size]="16"></lucide-icon></button></article>
-            </section>
+            <app-overview
+              [services]="services"
+              [products]="products"
+              [users]="users"
+              (navigateTo)="navigate($any($event))"
+              (createService)="openCreateModal('service')"
+              (createProduct)="openCreateModal('product')"
+            />
           }
 
           @case ('services') {
-            <section class="toolbar">
-              <div class="filter-search"><lucide-icon name="search" [size]="17"></lucide-icon><input [(ngModel)]="searchQuery" (ngModelChange)="resetTablePage()" placeholder="Rechercher un service..." /></div>
-              <div class="toolbar-actions"><select [(ngModel)]="statusFilter" (ngModelChange)="resetTablePage()" aria-label="Filtrer par statut"><option>Tous</option><option>Actif</option><option>Suspendu</option><option>Supprimé</option></select></div>
-            </section>
-            <section class="service-grid">
-              @for (service of paginatedServices; track service.id) {
-                <article class="service-card">
-                  <div class="service-card-top">
-                    <span class="service-icon" [class.form-service]="service.type === 'FORM'"><lucide-icon [name]="service.type === 'PRODUCTS' ? 'package' : 'file-text'" [size]="24"></lucide-icon></span>
-                    <span class="status-badge" [attr.data-tone]="statusTone(serviceStatusLabel(service.status))">{{ serviceStatusLabel(service.status) }}</span>
-                  </div>
-                  <div class="service-copy"><h2>{{ service.name }}</h2><p>{{ service.description || 'Aucune description.' }}</p></div>
-                  <div class="service-meta">
-                    <span><small>Type</small><strong>{{ serviceTypeLabel(service.type) }}</strong></span>
-                    <span><small>Produits</small><strong>{{ service.type === 'PRODUCTS' ? serviceProducts(service.id).length : '—' }}</strong></span>
-                    <span><small>Mis à jour</small><strong>{{ formatDate(service.updated_at) }}</strong></span>
-                  </div>
-                  <div class="service-actions">
-                    <button class="button secondary-button" type="button" (click)="inspectService(service)"><lucide-icon name="eye" [size]="16"></lucide-icon>Gérer</button>
-                    <button class="quiet-icon bordered" type="button" [disabled]="service.status === 'DELETED'" [attr.aria-label]="service.status === 'ACTIVE' ? 'Suspendre' : 'Réactiver'" (click)="toggleServiceStatus(service)"><lucide-icon [name]="service.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="16"></lucide-icon></button>
-                  </div>
-                </article>
-              } @empty {
-                <div class="empty-state"><lucide-icon name="search" [size]="26"></lucide-icon><h2>Aucun service trouvé</h2><p>Essayez un autre terme ou retirez un filtre.</p></div>
-              }
-            </section>
-            <div class="data-table-footer">
-              <span>{{ currentResultCount }} résultat(s)</span>
-              <label class="page-size-control">Afficher
-                <select [(ngModel)]="tablePageSize" (ngModelChange)="resetTablePage()"><option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="20">20</option></select>
-              </label>
-              <div class="pagination-controls">
-                <button class="icon-button" type="button" [disabled]="tablePage === 1" aria-label="Page précédente" (click)="changeTablePage(-1)"><lucide-icon name="chevron-left" [size]="17"></lucide-icon></button>
-                <strong>{{ tablePage }} / {{ totalTablePages }}</strong>
-                <button class="icon-button" type="button" [disabled]="tablePage === totalTablePages" aria-label="Page suivante" (click)="changeTablePage(1)"><lucide-icon name="chevron-right" [size]="17"></lucide-icon></button>
-              </div>
-            </div>
+            <app-catalog mode="services" [services]="services" [products]="products" [users]="users" (inspectService)="inspectService($event)" (serviceStatusChange)="toggleServiceStatus($event)" />
           }
 
           @case ('products') {
-            <section class="toolbar">
-              <div class="filter-search"><lucide-icon name="search" [size]="17"></lucide-icon><input [(ngModel)]="searchQuery" (ngModelChange)="resetTablePage()" placeholder="Rechercher un produit..." /></div>
-              <div class="toolbar-actions"><select [(ngModel)]="statusFilter" (ngModelChange)="resetTablePage()" aria-label="Filtrer par statut"><option>Tous</option><option>Actif</option><option>Suspendu</option><option>Supprimé</option></select></div>
-            </section>
-            <section class="panel table-panel">
-              <div class="table-scroll">
-                <table>
-                  <thead><tr><th>Produit</th><th>Service</th><th>Modalités</th><th>Prix</th><th>Statut</th><th>Note admin</th><th>Action</th></tr></thead>
-                  <tbody>
-                    @for (product of paginatedProducts; track product.id) {
-                      <tr>
-                        <td><div class="product-cell"><span>{{ product.name.slice(0, 1) }}</span><strong>{{ product.name }}</strong></div></td>
-                        <td>{{ serviceName(product.service_id) }}</td>
-                        <td>{{ product.modalities.length }}</td>
-                        <td><strong>{{ productPrice(product) }}</strong></td>
-                        <td><span class="status-badge" [attr.data-tone]="statusTone(catalogStatusLabel(product.status))">{{ catalogStatusLabel(product.status) }}</span></td>
-                        <td class="note-cell">{{ product.admin_note || '—' }}</td>
-                        <td>
-                          @if (product.status === 'DELETED') {
-                            <button class="table-action" type="button" (click)="changeProductStatus(product, 'ACTIVE')"><lucide-icon name="rotate-ccw" [size]="15"></lucide-icon>Restaurer</button>
-                          } @else {
-                            <button class="table-action" type="button" (click)="changeProductStatus(product, product.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE')"><lucide-icon [name]="product.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="15"></lucide-icon>{{ product.status === 'ACTIVE' ? 'Suspendre' : 'Réactiver' }}</button>
-                          }
-                        </td>
-                      </tr>
-                    } @empty {
-                      <tr><td colspan="7"><div class="inline-empty">Aucun produit disponible.</div></td></tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-              <div class="data-table-footer">
-                <span>{{ currentResultCount }} résultat(s)</span>
-                <label class="page-size-control">Afficher
-                  <select [(ngModel)]="tablePageSize" (ngModelChange)="resetTablePage()"><option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="20">20</option></select>
-                </label>
-                <div class="pagination-controls">
-                  <button class="icon-button" type="button" [disabled]="tablePage === 1" aria-label="Page précédente" (click)="changeTablePage(-1)"><lucide-icon name="chevron-left" [size]="17"></lucide-icon></button>
-                  <strong>{{ tablePage }} / {{ totalTablePages }}</strong>
-                  <button class="icon-button" type="button" [disabled]="tablePage === totalTablePages" aria-label="Page suivante" (click)="changeTablePage(1)"><lucide-icon name="chevron-right" [size]="17"></lucide-icon></button>
-                </div>
-              </div>
-            </section>
+            <app-catalog mode="products" [services]="services" [products]="products" [users]="users" (productStatusChange)="changeProductStatus($event.product, $event.status)" />
+          }
+
+          @case ('storage') {
+            <app-storage (toast)="handleChildToast($event)" />
           }
 
           @case ('users') {
-            <section class="toolbar">
-              <div class="filter-search"><lucide-icon name="search" [size]="17"></lucide-icon><input [(ngModel)]="searchQuery" (ngModelChange)="resetTablePage()" placeholder="Nom ou adresse email..." /></div>
-              <div class="toolbar-actions"><select [(ngModel)]="statusFilter" (ngModelChange)="resetTablePage()" aria-label="Filtrer par statut"><option>Tous</option><option>Actif</option><option>Révoqué</option></select></div>
-            </section>
-            <section class="panel table-panel">
-              <div class="table-scroll">
-                <table>
-                  <thead><tr><th>Utilisateur</th><th>Inscription</th><th>Rôle</th><th>Statut</th><th>Accès</th></tr></thead>
-                  <tbody>
-                    @for (user of paginatedUsers; track user.id) {
-                      <tr>
-                        <td><div class="customer-cell user-cell"><span>{{ userInitials(user) }}</span><div><strong>{{ userName(user) }}</strong><small>{{ user.email }}</small></div></div></td>
-                        <td>{{ formatDate(user.created_at) }}</td>
-                        <td>{{ user.role }}</td>
-                        <td><span class="status-badge" [attr.data-tone]="statusTone(userStatusLabel(user.status))">{{ userStatusLabel(user.status) }}</span></td>
-                        <td><button class="table-action" type="button" (click)="toggleUserStatus(user)"><lucide-icon [name]="user.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="15"></lucide-icon>{{ user.status === 'ACTIVE' ? 'Révoquer' : 'Réactiver' }}</button></td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-              <div class="data-table-footer">
-                <span>{{ currentResultCount }} résultat(s)</span>
-                <label class="page-size-control">Afficher
-                  <select [(ngModel)]="tablePageSize" (ngModelChange)="resetTablePage()"><option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="20">20</option></select>
-                </label>
-                <div class="pagination-controls">
-                  <button class="icon-button" type="button" [disabled]="tablePage === 1" aria-label="Page précédente" (click)="changeTablePage(-1)"><lucide-icon name="chevron-left" [size]="17"></lucide-icon></button>
-                  <strong>{{ tablePage }} / {{ totalTablePages }}</strong>
-                  <button class="icon-button" type="button" [disabled]="tablePage === totalTablePages" aria-label="Page suivante" (click)="changeTablePage(1)"><lucide-icon name="chevron-right" [size]="17"></lucide-icon></button>
-                </div>
-              </div>
-            </section>
+            <app-catalog mode="users" [services]="services" [products]="products" [users]="users" (userStatusChange)="toggleUserStatus($event)" />
+          }
+
+          @case ('settings') {
+            <app-settings
+              [darkMode]="darkMode"
+              (themeChange)="setTheme($event)"
+              (toast)="handleChildToast($event)"
+            />
           }
 
           @default {
@@ -368,7 +201,16 @@
     </main>
   </div>
 
-  @if (modalType) {
+  <app-catalog-dialogs
+    [type]="modalType"
+    [services]="services"
+    (close)="modalType = null"
+    (serviceCreated)="onServiceCreated($event)"
+    (productCreated)="onProductCreated($event)"
+    (toast)="handleChildToast($event)"
+  />
+
+  @if (false) {
     <div class="modal-backdrop" role="presentation" (click)="closeModal()">
       <section class="modal form-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
         <div class="modal-heading">
@@ -388,7 +230,17 @@
                 <select [(ngModel)]="serviceForm.type" name="serviceType"><option value="PRODUCTS">Produits</option><option value="FORM">Formulaire dynamique</option></select>
               </label>
             </div>
-            <label>URL de l’image<input [(ngModel)]="serviceForm.imageUrl" name="serviceImage" type="url" placeholder="https://cdn.exemple.com/service.jpg" /></label>
+            <div class="media-field">
+              <div class="media-field-preview">
+                @if (serviceForm.imageUrl) {
+                  <img [src]="serviceForm.imageUrl" alt="" />
+                } @else {
+                  <lucide-icon name="image" [size]="22"></lucide-icon>
+                }
+              </div>
+              <div class="media-field-copy"><strong>Image du service</strong><small>{{ serviceForm.imageUrl ? 'Image sélectionnée dans Storage' : 'Aucune image sélectionnée' }}</small></div>
+              <button class="button secondary-button" type="button" (click)="openMediaPicker('service')"><lucide-icon name="folder-open" [size]="16"></lucide-icon>{{ serviceForm.imageUrl ? 'Remplacer' : 'Choisir' }}</button>
+            </div>
             <label>Description<textarea [(ngModel)]="serviceForm.description" name="serviceDescription" rows="3" placeholder="Présentez clairement ce service..."></textarea></label>
 
             @if (serviceForm.type === 'FORM') {
@@ -427,8 +279,18 @@
 
             <div class="form-builder-heading"><div><span class="panel-kicker">Médias</span><h3>Images du produit</h3></div><button class="button secondary-button" type="button" (click)="addProductImage()"><lucide-icon name="plus" [size]="16"></lucide-icon>Ajouter</button></div>
             @for (image of productForm.images; track $index) {
-              <div class="builder-row">
-                <label class="grow-label">URL de l’image<input [(ngModel)]="image.url" [name]="'imageUrl' + $index" type="url" placeholder="https://cdn.exemple.com/produit.jpg" /></label>
+              <div class="builder-row media-builder-row">
+                <div class="media-field grow-label">
+                  <div class="media-field-preview">
+                    @if (image.url) {
+                      <img [src]="image.url" alt="" />
+                    } @else {
+                      <lucide-icon name="image" [size]="20"></lucide-icon>
+                    }
+                  </div>
+                  <div class="media-field-copy"><strong>Image {{ $index + 1 }}</strong><small>{{ image.url ? 'Prête à être utilisée' : 'Choisir depuis Storage' }}</small></div>
+                  <button class="button secondary-button" type="button" (click)="openMediaPicker('product', $index)"><lucide-icon name="folder-open" [size]="16"></lucide-icon>Choisir</button>
+                </div>
                 <label class="radio-label"><input [checked]="image.isPrimary" type="radio" name="primaryImage" (change)="setPrimaryImage($index)" />Principale</label>
                 <button class="quiet-icon bordered" type="button" aria-label="Supprimer l’image" (click)="removeProductImage($index)"><lucide-icon name="trash-2" [size]="16"></lucide-icon></button>
               </div>
@@ -453,6 +315,49 @@
           <div class="builder-empty"><lucide-icon name="wifi-off" [size]="24"></lucide-icon><span>Le contrat backend des publicités n’est pas encore disponible.</span></div>
           <div class="modal-actions"><button class="button secondary-button" type="button" (click)="closeModal()">Fermer</button></div>
         }
+      </section>
+    </div>
+  }
+
+  @if (mediaPickerOpen) {
+    <div class="modal-backdrop media-picker-backdrop" role="presentation" (click)="closeMediaPicker()">
+      <section class="modal media-picker-modal" role="dialog" aria-modal="true" aria-label="Choisir une image" (click)="$event.stopPropagation()">
+        <div class="modal-heading">
+          <div><span class="panel-kicker">Storage</span><h2>Choisir une image</h2></div>
+          <button class="icon-button" type="button" aria-label="Fermer" (click)="closeMediaPicker()"><lucide-icon name="x" [size]="19"></lucide-icon></button>
+        </div>
+
+        @if (storageError) {
+          <div class="form-error"><lucide-icon name="circle-alert" [size]="18"></lucide-icon><span>{{ storageError }}</span></div>
+        }
+
+        <div class="media-picker-toolbar">
+          <select [(ngModel)]="selectedBucketId" (ngModelChange)="selectStorageBucket($event)" aria-label="Bucket">
+            <option value="" disabled>Sélectionner un bucket</option>
+            @for (bucket of storageBuckets; track bucket.id) {
+              <option [value]="bucket.id">{{ bucket.name }}</option>
+            }
+          </select>
+          <label class="button primary-button upload-button" [class.disabled]="!selectedBucketId || storageUploading">
+            <lucide-icon [name]="storageUploading ? 'loader-circle' : 'upload'" [class.spinner]="storageUploading" [size]="17"></lucide-icon>
+            {{ storageUploading ? 'Envoi...' : 'Téléverser' }}
+            <input type="file" accept="image/*" [disabled]="!selectedBucketId || storageUploading" (change)="uploadStorageFile($event)" />
+          </label>
+        </div>
+
+        <div class="picker-grid">
+          @for (object of storageObjects; track object.id) {
+            <button class="picker-media" type="button" (click)="chooseStorageObject(object)">
+              <img [src]="object.url" [alt]="object.name" loading="lazy" />
+              <span><strong>{{ object.name }}</strong><small>Utiliser cette image</small></span>
+            </button>
+          } @empty {
+            <div class="builder-empty picker-empty">
+              <lucide-icon [name]="storageLoading ? 'loader-circle' : 'image'" [class.spinner]="storageLoading" [size]="24"></lucide-icon>
+              <span>{{ storageLoading ? 'Chargement des images...' : 'Ce bucket ne contient aucune image.' }}</span>
+            </div>
+          }
+        </div>
       </section>
     </div>
   }

@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
-import { AdminDashboardComponent } from './features/admin/admin-dashboard';
-import { LoginComponent } from './features/auth/login';
-import { adminGuard, guestGuard } from './core/services/admin.guard';
+import { adminGuard, adminMatchGuard, guestGuard } from './core/services/admin.guard';
 
 
 export const routes: Routes = [
@@ -12,15 +10,16 @@ export const routes: Routes = [
   {
     path: 'gestion-interne-ttk-v2',
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: '', redirectTo: 'login', pathMatch: 'full' },
       {
         path: 'dashboard',
-        component: AdminDashboardComponent,
+        loadComponent: () => import('./features/admin/admin-dashboard').then((module) => module.AdminDashboardComponent),
+        canMatch: [adminMatchGuard],
         canActivate: [adminGuard]
       },
       {
         path: 'login',
-        component: LoginComponent,
+        loadComponent: () => import('./features/auth/login').then((module) => module.LoginComponent),
         canActivate: [guestGuard]
       }
     ]
