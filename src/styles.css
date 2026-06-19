@@ -1,7 +1,8 @@
-@import "@fontsource/inria-sans/300.css";
-@import "@fontsource/inria-sans/400.css";
-@import "@fontsource/inria-sans/700.css";
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Trebuchet MS", "Lucida Grande", Arial, sans-serif;
+}
 
 @layer base {
   * {
@@ -9,7 +10,6 @@
   }
 
   html {
-    font-family: "Inria Sans", sans-serif;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

@@ -8,6 +8,13 @@ import {
   StorageObject,
 } from '../models/api.models';
 
+type StorageBucketResponse = StorageBucket & {
+  object_count?: number;
+  files_count?: number;
+  images_count?: number;
+  total_objects?: number;
+};
+
 @Injectable({ providedIn: 'root' })
 export class StorageApiService {
   private readonly http = inject(HttpClient);
@@ -15,8 +22,20 @@ export class StorageApiService {
 
   listBuckets(): Observable<StorageBucket[]> {
     return this.http
-      .get<ApiResponse<{ buckets: StorageBucket[] }>>(`${this.baseUrl}/buckets`)
-      .pipe(map((response) => response.data.buckets));
+      .get<ApiResponse<{ buckets: StorageBucketResponse[] }>>(`${this.baseUrl}/buckets`)
+      .pipe(
+        map((response) =>
+          response.data.buckets.map((bucket) => ({
+            ...bucket,
+            objects_count:
+              bucket.objects_count ??
+              bucket.object_count ??
+              bucket.files_count ??
+              bucket.images_count ??
+              bucket.total_objects,
+          })),
+        ),
+      );
   }
 
   createBucket(name: string): Observable<StorageBucket> {

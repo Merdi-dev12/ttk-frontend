@@ -16,6 +16,7 @@ import {
   ApiErrorResponse,
 } from '../../../../core/models/api.models';
 import { AdminSettingsApi } from '../../../../core/services/admin-settings';
+import { Dropdown, DropdownOption } from '../../../../shared/ui/dropdown/dropdown';
 
 type SettingsSection = keyof AdminSettings | 'appearance' | 'maintenance';
 
@@ -75,7 +76,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
 
 @Component({
   selector: 'app-settings',
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, Dropdown],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,6 +94,16 @@ export class Settings {
   readonly saving = signal(false);
   readonly endpointMissing = signal(false);
   readonly error = signal('');
+  readonly currencyOptions: DropdownOption[] = [
+    { value: 'CDF', label: 'CDF' },
+    { value: 'USD', label: 'USD' },
+  ];
+  readonly timezoneOptions: DropdownOption[] = [
+    { value: 'Africa/Lagos', label: 'Africa/Lagos' },
+    { value: 'Africa/Kinshasa', label: 'Africa/Kinshasa' },
+    { value: 'Africa/Lubumbashi', label: 'Africa/Lubumbashi' },
+    { value: 'UTC', label: 'UTC' },
+  ];
   readonly allowedIpsText = signal('');
 
   readonly navigation: SettingsNavItem[] = [

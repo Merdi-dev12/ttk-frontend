@@ -1,29 +1,29 @@
 @if (endpointMissing()) {
-  <div class="endpoint-banner">
+  <div class="endpoint-banner text-sm">
     <lucide-icon name="plug-zap" [size]="19"></lucide-icon>
-    <div><strong>Interface prête à connecter</strong><p>Les valeurs affichées sont les valeurs par défaut. Les routes backend sont déjà branchées dans le frontend.</p></div>
+    <div><strong class="text-base!">Interface prête à connecter</strong><p class="text-sm!">Les valeurs affichées sont les valeurs par défaut. Les routes backend sont déjà branchées dans le frontend.</p></div>
   </div>
 }
 
 <section class="settings-layout">
   <aside class="settings-nav">
     @for (item of navigation; track item.id) {
-      <button type="button" [class.active]="activeSection() === item.id" (click)="selectSection(item.id)">
+      <button class="text-sm!" type="button" [class.active]="activeSection() === item.id" (click)="selectSection(item.id)">
         <span><lucide-icon [name]="item.icon" [size]="18"></lucide-icon></span>
-        <div><strong>{{ item.label }}</strong><small>{{ item.detail }}</small></div>
+        <div><strong class="text-sm!">{{ item.label }}</strong><small class="text-xs!">{{ item.detail }}</small></div>
         <lucide-icon name="chevron-right" [size]="15"></lucide-icon>
       </button>
     }
   </aside>
 
-  <article class="settings-panel">
+  <article class="settings-panel [&_label]:text-sm! [&_input]:text-sm! [&_select]:text-sm! [&_textarea]:text-sm! [&_button]:text-sm! [&_.section-heading_h3]:text-base! [&_.section-heading_p]:text-sm! [&_.setting-toggle_strong]:text-sm! [&_.setting-toggle_small]:text-xs! [&_.theme-options_strong]:text-sm! [&_.theme-options_small]:text-xs! [&_.file-types_strong]:text-sm! [&_.file-types_span]:text-xs! [&_.maintenance-action_strong]:text-sm! [&_.maintenance-action_small]:text-xs! [&_footer_span]:text-sm!">
     <header>
       <span><lucide-icon [name]="currentNav().icon" [size]="21"></lucide-icon></span>
-      <div><small>Configuration</small><h2>{{ currentNav().label }}</h2><p>{{ currentNav().detail }}</p></div>
+      <div><h2 class="text-xl!">{{ currentNav().label }}</h2><p class="text-sm!">{{ currentNav().detail }}</p></div>
     </header>
 
     @if (loading()) {
-      <div class="loading"><lucide-icon class="spinner" name="loader-circle" [size]="23"></lucide-icon>Chargement des paramètres...</div>
+      <div class="loading text-sm!"><lucide-icon class="spinner" name="loader-circle" [size]="23"></lucide-icon>Chargement des paramètres...</div>
     } @else {
       @switch (activeSection()) {
         @case ('general') {
@@ -31,10 +31,10 @@
             <div class="section-heading"><h3>Identité de la plateforme</h3><p>Informations générales utilisées dans l’administration et les communications.</p></div>
             <div class="form-grid">
               <label>Nom de la plateforme<input [ngModel]="values().general.platformName" (ngModelChange)="updateSection('general', { platformName: $event })" /></label>
-              <label>Devise par défaut<select [ngModel]="values().general.defaultCurrency" (ngModelChange)="updateSection('general', { defaultCurrency: $event })"><option value="CDF">CDF</option><option value="USD">USD</option></select></label>
+              <label>Devise par défaut<app-dropdown [options]="currencyOptions" [value]="values().general.defaultCurrency" (valueChange)="updateSection('general', { defaultCurrency: $any($event) })" /></label>
               <label>Email de support<input type="email" [ngModel]="values().general.supportEmail" (ngModelChange)="updateSection('general', { supportEmail: $event })" /></label>
               <label>Téléphone de support<input [ngModel]="values().general.supportPhone" (ngModelChange)="updateSection('general', { supportPhone: $event })" /></label>
-              <label>Fuseau horaire<select [ngModel]="values().general.timezone" (ngModelChange)="updateSection('general', { timezone: $event })"><option value="Africa/Lagos">Africa/Lagos</option><option value="Africa/Kinshasa">Africa/Kinshasa</option><option value="Africa/Lubumbashi">Africa/Lubumbashi</option><option value="UTC">UTC</option></select></label>
+              <label>Fuseau horaire<app-dropdown [options]="timezoneOptions" [value]="values().general.timezone" (valueChange)="updateSection('general', { timezone: $any($event) })" /></label>
             </div>
             <label class="setting-toggle"><span><strong>Mode maintenance</strong><small>Masque temporairement l’application client.</small></span><input type="checkbox" [ngModel]="values().general.maintenanceMode" (ngModelChange)="updateSection('general', { maintenanceMode: $event })" /></label>
           </section>
@@ -123,7 +123,7 @@
     }
 
     @if (error()) {
-      <div class="settings-error"><lucide-icon name="circle-alert" [size]="17"></lucide-icon>{{ error() }}</div>
+      <div class="settings-error text-sm!"><lucide-icon name="circle-alert" [size]="17"></lucide-icon>{{ error() }}</div>
     }
 
     @if (activeSection() !== 'maintenance') {

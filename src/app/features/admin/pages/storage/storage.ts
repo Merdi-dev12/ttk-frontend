@@ -60,7 +60,10 @@ export class Storage {
       .listObjects(bucketId)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (objects) => this.objects.set(objects),
+        next: (objects) => {
+          this.objects.set(objects);
+          this.updateBucketCount(bucketId, objects.length);
+        },
         error: (error) => this.handleError(error),
       });
   }
@@ -105,6 +108,7 @@ export class Storage {
       .subscribe({
         next: (object) => {
           this.objects.update((items) => [object, ...items]);
+          this.updateBucketCount(this.selectedBucketId(), this.objects().length);
           this.toast.emit({ message: 'Image téléversée dans Storage.' });
         },
         error: (error) => this.handleError(error),
@@ -123,6 +127,7 @@ export class Storage {
     this.api.deleteObject(object.bucket_id, object.id).subscribe({
       next: () => {
         this.objects.update((items) => items.filter((item) => item.id !== object.id));
+        this.updateBucketCount(object.bucket_id, this.objects().length);
         this.toast.emit({ message: 'Image supprimée de Storage.' });
       },
       error: (error) => this.handleError(error),
@@ -140,6 +145,14 @@ export class Storage {
         },
         error: (error) => this.handleError(error),
       });
+  }
+
+  private updateBucketCount(bucketId: string, count: number): void {
+    this.buckets.update((buckets) =>
+      buckets.map((bucket) =>
+        bucket.id === bucketId ? { ...bucket, objects_count: count } : bucket,
+      ),
+    );
   }
 
   private handleError(error: {

@@ -332,12 +332,7 @@
         }
 
         <div class="media-picker-toolbar">
-          <select [(ngModel)]="selectedBucketId" (ngModelChange)="selectStorageBucket($event)" aria-label="Bucket">
-            <option value="" disabled>Sélectionner un bucket</option>
-            @for (bucket of storageBuckets; track bucket.id) {
-              <option [value]="bucket.id">{{ bucket.name }}</option>
-            }
-          </select>
+          <div class="w-full max-w-xs"><app-dropdown [options]="storageBucketOptions" [value]="selectedBucketId" placeholder="Sélectionner un bucket" ariaLabel="Bucket" (valueChange)="selectStorageBucket($any($event))" /></div>
           <label class="button primary-button upload-button" [class.disabled]="!selectedBucketId || storageUploading">
             <lucide-icon [name]="storageUploading ? 'loader-circle' : 'upload'" [class.spinner]="storageUploading" [size]="17"></lucide-icon>
             {{ storageUploading ? 'Envoi...' : 'Téléverser' }}

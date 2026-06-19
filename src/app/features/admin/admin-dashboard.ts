@@ -110,6 +110,7 @@ import {
   CatalogDialogs,
   CatalogDialogType,
 } from './ui/catalog-dialogs/catalog-dialogs';
+import { Dropdown, DropdownOption } from '../../shared/ui/dropdown/dropdown';
 
 export const ADMIN_ICONS = {
   Activity,
@@ -244,6 +245,7 @@ interface ProductModalityForm {
     SettingsPage,
     Storage,
     CatalogDialogs,
+    Dropdown,
   ],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css',
@@ -441,6 +443,10 @@ export class AdminDashboardComponent implements OnInit {
 
   get selectedStorageBucket(): StorageBucket | null {
     return this.storageBuckets.find((bucket) => bucket.id === this.selectedBucketId) ?? null;
+  }
+
+  get storageBucketOptions(): DropdownOption[] {
+    return this.storageBuckets.map((bucket) => ({ value: bucket.id, label: bucket.name }));
   }
 
   get filteredStorageObjects(): StorageObject[] {

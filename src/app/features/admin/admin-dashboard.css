@@ -39,7 +39,6 @@ textarea {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: "Inria Sans", sans-serif;
   letter-spacing: 0;
 }
 

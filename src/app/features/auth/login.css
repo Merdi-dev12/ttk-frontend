@@ -13,7 +13,6 @@
   grid-template-columns: minmax(360px, 0.9fr) minmax(480px, 1.1fr);
   background: #f5f6f2;
   color: #17201d;
-  font-family: "Inria Sans", sans-serif;
   letter-spacing: 0;
 }
 

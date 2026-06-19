@@ -23,6 +23,7 @@ import {
 } from '../../../../core/models/api.models';
 import { AdminApiService } from '../../../../core/services/admin-api.service';
 import { StorageApiService } from '../../../../core/services/storage-api.service';
+import { Dropdown, DropdownOption } from '../../../../shared/ui/dropdown/dropdown';
 
 export type CatalogDialogType = 'service' | 'product' | null;
 
@@ -45,7 +46,7 @@ interface ModalityForm {
 
 @Component({
   selector: 'app-catalog-dialogs',
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, Dropdown],
   templateUrl: './catalog-dialogs.html',
   styleUrl: './catalog-dialogs.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,6 +83,27 @@ export class CatalogDialogs {
     { value: 'TEXTAREA', label: 'Zone de texte' },
     { value: 'PHONE', label: 'Téléphone' },
   ];
+  readonly serviceTypes: DropdownOption[] = [
+    { value: 'PRODUCTS', label: 'Produits' },
+    { value: 'FORM', label: 'Formulaire dynamique' },
+  ];
+  readonly currencies: DropdownOption[] = [
+    { value: 'CDF', label: 'CDF' },
+    { value: 'USD', label: 'USD' },
+  ];
+  readonly availabilities: DropdownOption[] = [
+    { value: 'AVAILABLE', label: 'Disponible' },
+    { value: 'UNAVAILABLE', label: 'Indisponible' },
+    { value: 'ON_REQUEST', label: 'Sur demande' },
+  ];
+
+  get productServiceOptions(): DropdownOption[] {
+    return this.productServices.map((service) => ({ value: service.id, label: service.name }));
+  }
+
+  get bucketOptions(): DropdownOption[] {
+    return this.buckets().map((bucket) => ({ value: bucket.id, label: bucket.name }));
+  }
 
   get productServices(): AdminService[] {
     return this.services().filter((service) => service.type === 'PRODUCTS' && service.status !== 'DELETED');

@@ -15,12 +15,13 @@ import {
   ApiUser,
   CatalogStatus,
 } from '../../../../core/models/api.models';
+import { Dropdown, DropdownOption } from '../../../../shared/ui/dropdown/dropdown';
 
 export type CatalogMode = 'services' | 'products' | 'users';
 
 @Component({
   selector: 'app-catalog',
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, Dropdown],
   templateUrl: './catalog.html',
   styleUrl: './catalog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +41,22 @@ export class Catalog {
   readonly status = signal('Tous');
   readonly page = signal(1);
   readonly pageSize = signal(10);
+  readonly pageSizeOptions: DropdownOption[] = [
+    { value: 5, label: '5' },
+    { value: 10, label: '10' },
+    { value: 20, label: '20' },
+  ];
+
+  readonly statusOptions = computed<DropdownOption[]>(() => [
+    { value: 'Tous', label: 'Tous' },
+    { value: 'Actif', label: 'Actif' },
+    ...(this.mode() === 'users'
+      ? [{ value: 'Révoqué', label: 'Révoqué' }]
+      : [
+          { value: 'Suspendu', label: 'Suspendu' },
+          { value: 'Supprimé', label: 'Supprimé' },
+        ]),
+  ]);
 
   readonly filteredItems = computed(() => {
     const query = this.search().trim().toLocaleLowerCase('fr');
