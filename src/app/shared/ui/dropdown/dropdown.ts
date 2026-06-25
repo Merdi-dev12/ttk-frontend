@@ -44,6 +44,8 @@ export class Dropdown {
     if (!this.host.nativeElement.contains(event.target as Node)) this.open.set(false);
   }
 
+  
+
   toggle(): void {
     if (!this.disabled()) this.open.update((value) => !value);
   }
