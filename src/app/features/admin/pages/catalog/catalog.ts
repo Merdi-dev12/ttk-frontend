@@ -18,6 +18,9 @@ import {
 import { Dropdown, DropdownOption } from '../../../../shared/ui/dropdown/dropdown';
 
 export type CatalogMode = 'services' | 'products' | 'users';
+export type CatalogBulkStatusChange =
+  | { mode: 'services'; items: AdminService[]; status: CatalogStatus }
+  | { mode: 'products'; items: AdminProduct[]; status: CatalogStatus };
 
 @Component({
   selector: 'app-catalog',
@@ -34,13 +37,21 @@ export class Catalog {
 
   readonly inspectService = output<AdminService>();
   readonly serviceStatusChange = output<AdminService>();
+  readonly serviceDelete = output<AdminService>();
+  readonly serviceBulkDelete = output<AdminService[]>();
   readonly productStatusChange = output<{ product: AdminProduct; status: CatalogStatus }>();
+  readonly productDelete = output<AdminProduct>();
+  readonly productBulkDelete = output<AdminProduct[]>();
+  readonly bulkCatalogStatusChange = output<CatalogBulkStatusChange>();
   readonly userStatusChange = output<ApiUser>();
+  readonly userBulkStatusChange = output<{ users: ApiUser[]; status: ApiUser['status'] }>();
 
   readonly search = signal('');
   readonly status = signal('Tous');
   readonly page = signal(1);
   readonly pageSize = signal(10);
+  readonly selectionMode = signal(false);
+  readonly selectedIds = signal<Set<string>>(new Set());
   readonly pageSizeOptions: DropdownOption[] = [
     { value: 5, label: '5' },
     { value: 10, label: '10' },
@@ -86,24 +97,93 @@ export class Catalog {
     const start = (this.page() - 1) * this.pageSize();
     return this.filteredItems().slice(start, start + this.pageSize());
   });
+  readonly selectedItems = computed(() => {
+    const ids = this.selectedIds();
+    return this.filteredItems().filter((item) => ids.has(this.itemId(item)));
+  });
+  readonly allPageItemsSelected = computed(() =>
+    this.pageItems().length > 0 &&
+    this.pageItems().every((item) => this.selectedIds().has(this.itemId(item))),
+  );
 
   setFilter(value: string): void {
     this.search.set(value);
     this.page.set(1);
+    this.clearSelection();
   }
 
   setStatus(value: string): void {
     this.status.set(value);
     this.page.set(1);
+    this.clearSelection();
   }
 
   setPageSize(value: number): void {
     this.pageSize.set(Number(value));
     this.page.set(1);
+    this.clearSelection();
   }
 
   changePage(direction: -1 | 1): void {
     this.page.set(Math.min(this.totalPages(), Math.max(1, this.page() + direction)));
+  }
+
+  enableSelection(): void {
+    this.selectionMode.set(true);
+  }
+
+  closeSelection(): void {
+    this.selectionMode.set(false);
+    this.clearSelection();
+  }
+
+  toggleItem(item: AdminService | AdminProduct | ApiUser, checked: boolean): void {
+    const ids = new Set(this.selectedIds());
+    const id = this.itemId(item);
+    checked ? ids.add(id) : ids.delete(id);
+    this.selectedIds.set(ids);
+  }
+
+  togglePageSelection(checked: boolean): void {
+    const ids = new Set(this.selectedIds());
+    this.pageItems().forEach((item) => {
+      const id = this.itemId(item);
+      checked ? ids.add(id) : ids.delete(id);
+    });
+    this.selectedIds.set(ids);
+  }
+
+  selectAllFiltered(): void {
+    this.selectedIds.set(new Set(this.filteredItems().map((item) => this.itemId(item))));
+  }
+
+  clearSelection(): void {
+    this.selectedIds.set(new Set());
+  }
+
+  deleteSelected(): void {
+    const items = this.selectedItems();
+    if (this.mode() === 'services') {
+      this.serviceBulkDelete.emit(items as AdminService[]);
+    } else if (this.mode() === 'products') {
+      this.productBulkDelete.emit(items as AdminProduct[]);
+    }
+    this.clearSelection();
+  }
+
+  changeSelectedStatus(status: CatalogStatus): void {
+    const items = this.selectedItems();
+    if (this.mode() === 'services') {
+      this.bulkCatalogStatusChange.emit({ mode: 'services', items: items as AdminService[], status });
+    } else if (this.mode() === 'products') {
+      this.bulkCatalogStatusChange.emit({ mode: 'products', items: items as AdminProduct[], status });
+    }
+    this.clearSelection();
+  }
+
+  changeSelectedUserStatus(status: ApiUser['status']): void {
+    this.userBulkStatusChange.emit({ users: this.selectedItems() as ApiUser[], status });
+    this.clearSelection();
   }
 
   serviceProducts(serviceId: string): AdminProduct[] {
@@ -152,5 +232,9 @@ export class Catalog {
 
   private matches(query: string, ...values: string[]): boolean {
     return !query || values.some((value) => value.toLocaleLowerCase('fr').includes(query));
+  }
+
+  private itemId(item: AdminService | AdminProduct | ApiUser): string {
+    return item.id;
   }
 }

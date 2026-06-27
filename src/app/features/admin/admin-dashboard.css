@@ -1300,6 +1300,9 @@ select option {
 
 .service-actions .button {
   flex: 1;
+  width: 100%;
+  justify-content: center;
+  text-align: center;
 }
 
 .product-cell {

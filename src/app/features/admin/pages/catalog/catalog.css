@@ -24,6 +24,7 @@
 .service-grid footer { gap: 7px; }
 .service-grid footer button, .table-action { display: flex; min-height: 32px; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text); font-weight: 700; }
 .service-grid footer button:first-child { flex: 1; }
+.service-grid footer button { text-align: center; }
 .service-grid footer .icon-action { width: 34px; }
 .table-panel { min-width: 0; overflow: hidden; }
 .table-scroll { overflow-x: auto; }

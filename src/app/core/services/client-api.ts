@@ -31,8 +31,8 @@ const fallbackProducts: AdminProduct[] = [
     admin_note: null, status: 'ACTIVE',
     images: [],
     modalities: [
-      { label: '1 mois', price: 8, currency: 'USD', availability: 'AVAILABLE' },
-      { label: '3 mois', price: 22, currency: 'USD', availability: 'AVAILABLE' },
+      { label: '1 mois', price: 22000, currency: 'CDF', availability: 'AVAILABLE' },
+      { label: '3 mois', price: 60000, currency: 'CDF', availability: 'AVAILABLE' },
     ],
   },
   {
@@ -40,7 +40,7 @@ const fallbackProducts: AdminProduct[] = [
     description: 'Un compte prêt pour créer des visuels, documents et contenus pro.',
     admin_note: null, status: 'ACTIVE',
     images: [],
-    modalities: [{ label: '30 jours', price: 5, currency: 'USD', availability: 'AVAILABLE' }],
+    modalities: [{ label: '30 jours', price: 14000, currency: 'CDF', availability: 'AVAILABLE' }],
   },
   {
     id: 'prd-appart', service_id: 'svc-immobilier', slug: 'studio-centre-ville', name: 'Studio centre-ville',
@@ -48,8 +48,8 @@ const fallbackProducts: AdminProduct[] = [
     admin_note: null, status: 'ACTIVE',
     images: [],
     modalities: [
-      { label: 'Location mensuelle', price: 250, currency: 'USD', availability: 'ON_REQUEST' },
-      { label: 'Visite', price: 0, currency: 'USD', availability: 'AVAILABLE' },
+      { label: 'Location mensuelle', price: 700000, currency: 'CDF', availability: 'ON_REQUEST' },
+      { label: 'Visite', price: 0, currency: 'CDF', availability: 'AVAILABLE' },
     ],
   },
   {
@@ -57,7 +57,7 @@ const fallbackProducts: AdminProduct[] = [
     description: 'Ressources visuelles et accès créatifs pour lancer un projet vite.',
     admin_note: null, status: 'ACTIVE',
     images: [],
-    modalities: [{ label: 'Pack standard', price: 12, currency: 'USD', availability: 'AVAILABLE' }],
+    modalities: [{ label: 'Pack standard', price: 34000, currency: 'CDF', availability: 'AVAILABLE' }],
   },
 ];
 
@@ -99,8 +99,8 @@ export class ClientApi {
     return this.http.post(`${this.baseUrl}/auth/verify-otp`, { email, code });
   }
 
-  formatPrice(value: number, currency: Currency): string {
+  formatPrice(value: number, currency: Currency = 'CDF'): string {
     if (value === 0) return 'Sur demande';
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(value);
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'CDF', maximumFractionDigits: 0 }).format(value);
   }
 }

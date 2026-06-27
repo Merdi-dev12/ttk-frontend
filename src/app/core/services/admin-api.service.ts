@@ -54,6 +54,10 @@ export class AdminApiService {
     ).pipe(map((response) => response.data.service));
   }
 
+  deleteService(serviceId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/catalog/admin/services/${serviceId}`);
+  }
+
   createField(serviceId: string, payload: CreateFieldPayload): Observable<unknown> {
     return this.http.post(
       `${this.baseUrl}/catalog/admin/services/${serviceId}/fields`,
@@ -89,6 +93,10 @@ export class AdminApiService {
       `${this.baseUrl}/catalog/admin/products/${productId}/status`,
       { status }
     ).pipe(map((response) => response.data.product));
+  }
+
+  deleteProduct(productId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/catalog/admin/products/${productId}`);
   }
 
   listUsers(filters: { page?: number; limit?: number; status?: UserStatus; search?: string } = {}): Observable<{ items: ApiUser[]; pagination: Pagination }> {

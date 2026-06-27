@@ -16,10 +16,11 @@ import {
   StorageObject,
 } from '../../../../core/models/api.models';
 import { StorageApiService } from '../../../../core/services/storage-api.service';
+import { ConfirmDialog } from '../../ui/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-storage',
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, ConfirmDialog],
   templateUrl: './storage.html',
   styleUrl: './storage.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +36,8 @@ export class Storage {
   readonly newBucketName = signal('');
   readonly loading = signal(true);
   readonly uploading = signal(false);
+  readonly deleting = signal(false);
+  readonly pendingRemoval = signal<StorageObject | null>(null);
   readonly error = signal('');
 
   readonly selectedBucket = computed(
@@ -123,11 +126,25 @@ export class Storage {
   }
 
   remove(object: StorageObject): void {
-    if (!window.confirm(`Supprimer définitivement « ${object.name} » ?`)) return;
-    this.api.deleteObject(object.bucket_id, object.id).subscribe({
+    this.pendingRemoval.set(object);
+  }
+
+  cancelRemoval(): void {
+    if (this.deleting()) return;
+    this.pendingRemoval.set(null);
+  }
+
+  confirmRemoval(): void {
+    const object = this.pendingRemoval();
+    if (!object || this.deleting()) return;
+    this.deleting.set(true);
+    this.api.deleteObject(object.bucket_id, object.id).pipe(
+      finalize(() => this.deleting.set(false)),
+    ).subscribe({
       next: () => {
         this.objects.update((items) => items.filter((item) => item.id !== object.id));
         this.updateBucketCount(object.bucket_id, this.objects().length);
+        this.pendingRemoval.set(null);
         this.toast.emit({ message: 'Image supprimée de Storage.' });
       },
       error: (error) => this.handleError(error),

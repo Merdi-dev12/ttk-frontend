@@ -154,11 +154,11 @@
           }
 
           @case ('services') {
-            <app-catalog mode="services" [services]="services" [products]="products" [users]="users" (inspectService)="inspectService($event)" (serviceStatusChange)="toggleServiceStatus($event)" />
+            <app-catalog mode="services" [services]="services" [products]="products" [users]="users" (inspectService)="inspectService($event)" (serviceStatusChange)="toggleServiceStatus($event)" (serviceDelete)="deleteService($event)" (serviceBulkDelete)="deleteServices($event)" (bulkCatalogStatusChange)="changeCatalogBulkStatus($event)" />
           }
 
           @case ('products') {
-            <app-catalog mode="products" [services]="services" [products]="products" [users]="users" (productStatusChange)="changeProductStatus($event.product, $event.status)" />
+            <app-catalog mode="products" [services]="services" [products]="products" [users]="users" (productStatusChange)="changeProductStatus($event.product, $event.status)" (productDelete)="deleteProduct($event)" (productBulkDelete)="deleteProducts($event)" (bulkCatalogStatusChange)="changeCatalogBulkStatus($event)" />
           }
 
           @case ('storage') {
@@ -166,7 +166,7 @@
           }
 
           @case ('users') {
-            <app-catalog mode="users" [services]="services" [products]="products" [users]="users" (userStatusChange)="toggleUserStatus($event)" />
+            <app-catalog mode="users" [services]="services" [products]="products" [users]="users" (userStatusChange)="toggleUserStatus($event)" (userBulkStatusChange)="changeUsersBulkStatus($event)" />
           }
 
           @case ('settings') {
@@ -209,6 +209,18 @@
     (productCreated)="onProductCreated($event)"
     (toast)="handleChildToast($event)"
   />
+
+  @if (deleteConfirmation) {
+    <app-confirm-dialog
+      [title]="deleteConfirmation.title"
+      [message]="deleteConfirmation.message"
+      [details]="deleteConfirmation.details"
+      [confirmLabel]="deleteConfirmation.confirmLabel"
+      [loading]="deletingResource"
+      (cancel)="cancelDeleteConfirmation()"
+      (confirm)="confirmDeletion()"
+    />
+  }
 
   @if (false) {
     <div class="modal-backdrop" role="presentation" (click)="closeModal()">
@@ -381,6 +393,7 @@
       </div>
       <div class="drawer-actions">
         <button class="button danger-button" type="button" [disabled]="selectedService.status === 'DELETED'" (click)="toggleServiceStatus(selectedService)"><lucide-icon [name]="selectedService.status === 'ACTIVE' ? 'circle-pause' : 'rotate-ccw'" [size]="16"></lucide-icon>{{ selectedService.status === 'ACTIVE' ? 'Suspendre' : 'Réactiver' }}</button>
+        <button class="button danger-button" type="button" [disabled]="selectedService.status === 'DELETED'" (click)="deleteService(selectedService)"><lucide-icon name="trash-2" [size]="16"></lucide-icon>Supprimer</button>
       </div>
     </aside>
   }

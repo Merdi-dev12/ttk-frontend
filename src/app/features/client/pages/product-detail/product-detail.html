@@ -1,0 +1,35 @@
+<div class="px-4 py-6 md:px-7">
+  @if (product(); as item) {
+    <a class="mb-5 inline-flex items-center gap-2 text-sm text-white/58 hover:text-white" routerLink="/services"><lucide-icon name="arrow-left" [size]="17" /> Retour au catalogue</a>
+    <section class="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_420px]">
+      <div>
+        <div class="min-h-[420px] rounded-2xl border border-white/10 bg-cover bg-center" [style.background]="visual(item)"></div>
+        <div class="mt-5 rounded-2xl border border-white/10 bg-white/6 p-5">
+          <h2 class="text-xl font-semibold">Détails</h2>
+          <p class="mt-3 text-sm leading-7 text-white/62">{{ item.description || 'Aucune description disponible pour le moment.' }}</p>
+        </div>
+      </div>
+      <aside class="h-fit rounded-2xl border border-white/10 bg-[#171b19] p-6">
+        <span class="rounded-full bg-white/8 px-3 py-1 text-xs text-white/72">Produit</span>
+        <h1 class="mt-4 text-4xl font-semibold">{{ item.name }}</h1>
+        <p class="mt-3 text-sm leading-6 text-white/58">Choisissez une modalité avant de lancer votre commande.</p>
+        <div class="mt-6 grid gap-3">
+          @for (modality of item.modalities; track modality.label) {
+            <button class="rounded-xl border border-white/10 p-4 text-left transition hover:bg-white/8" [class.bg-white]="selectedModality() === modality" [class.text-[#101312]]="selectedModality() === modality" type="button" (click)="selectedModality.set(modality)">
+              <span class="flex items-center justify-between gap-3">
+                <strong class="font-semibold">{{ modality.label }}</strong>
+                <span class="text-sm">{{ price(modality) }}</span>
+              </span>
+              <small class="mt-2 block opacity-70">{{ modality.availability === 'AVAILABLE' ? 'Disponible' : modality.availability === 'ON_REQUEST' ? 'Sur demande' : 'Indisponible' }}</small>
+            </button>
+          }
+        </div>
+        <button class="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#dcefe5] px-5 py-3 text-sm text-[#17352d]">
+          Commander <lucide-icon name="arrow-right" [size]="17" />
+        </button>
+      </aside>
+    </section>
+  } @else {
+    <div class="rounded-2xl border border-dashed border-white/14 p-10 text-center text-white/55">Produit introuvable.</div>
+  }
+</div>

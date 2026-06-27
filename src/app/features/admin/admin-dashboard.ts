@@ -42,9 +42,11 @@ import {
   FolderOpen,
   FolderPlus,
   HardDriveUpload,
+  Home,
   Image,
   Inbox,
   Landmark,
+  Layers3,
   LayoutDashboard,
   ListPlus,
   LoaderCircle,
@@ -78,6 +80,7 @@ import {
   Trash2,
   TrendingUp,
   Upload,
+  UserRound,
   UserRoundCheck,
   Users,
   WalletCards,
@@ -103,13 +106,14 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 import { StorageApiService } from '../../core/services/storage-api.service';
 import { Overview } from './pages/overview/overview';
-import { Catalog } from './pages/catalog/catalog';
+import { Catalog, CatalogBulkStatusChange } from './pages/catalog/catalog';
 import { Settings as SettingsPage } from './pages/settings/settings';
 import { Storage } from './pages/storage/storage';
 import {
   CatalogDialogs,
   CatalogDialogType,
 } from './ui/catalog-dialogs/catalog-dialogs';
+import { ConfirmDialog } from './ui/confirm-dialog/confirm-dialog';
 import { Dropdown, DropdownOption } from '../../shared/ui/dropdown/dropdown';
 
 export const ADMIN_ICONS = {
@@ -146,9 +150,11 @@ export const ADMIN_ICONS = {
   FolderOpen,
   FolderPlus,
   HardDriveUpload,
+  Home,
   Image,
   Inbox,
   Landmark,
+  Layers3,
   LayoutDashboard,
   ListPlus,
   LoaderCircle,
@@ -181,6 +187,7 @@ export const ADMIN_ICONS = {
   Trash2,
   TrendingUp,
   Upload,
+  UserRound,
   UserRoundCheck,
   Users,
   WalletCards,
@@ -233,6 +240,10 @@ interface ProductModalityForm {
   additionalAttributesText: string;
 }
 
+type DeleteConfirmation =
+  | { kind: 'services'; items: AdminService[]; title: string; message: string; details: string; confirmLabel: string }
+  | { kind: 'products'; items: AdminProduct[]; title: string; message: string; details: string; confirmLabel: string };
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -245,6 +256,7 @@ interface ProductModalityForm {
     SettingsPage,
     Storage,
     CatalogDialogs,
+    ConfirmDialog,
     Dropdown,
   ],
   templateUrl: './admin-dashboard.html',
@@ -277,11 +289,13 @@ export class AdminDashboardComponent implements OnInit {
   selectedService: AdminService | null = null;
   storageLoading = false;
   storageUploading = false;
+  deletingResource = false;
   storageError = '';
   newBucketName = '';
   selectedBucketId = '';
   mediaPickerOpen = false;
   private mediaTarget: { type: 'service' } | { type: 'product'; index: number } | null = null;
+  deleteConfirmation: DeleteConfirmation | null = null;
 
   services: AdminService[] = [];
   products: AdminProduct[] = [];
@@ -662,19 +676,6 @@ export class AdminDashboardComponent implements OnInit {
     );
   }
 
-  removeStorageObject(object: StorageObject): void {
-    if (!window.confirm(`Supprimer définitivement « ${object.name} » ?`)) return;
-
-    this.storageApi.deleteObject(object.bucket_id, object.id).subscribe({
-      next: () => {
-        this.storageObjects = this.storageObjects.filter((item) => item.id !== object.id);
-        this.showToast('Image supprimée de Storage.');
-        this.cdr.markForCheck();
-      },
-      error: (error) => this.handleStorageError(error)
-    });
-  }
-
   addProductModality(): void {
     this.productForm.modalities.push(this.newProductModality());
   }
@@ -716,6 +717,108 @@ export class AdminDashboardComponent implements OnInit {
       next: (updated) => {
         this.products = this.products.map((item) => item.id === updated.id ? { ...item, ...updated } : item);
         this.showToast(`${updated.name} est maintenant ${this.catalogStatusLabel(updated.status).toLowerCase()}.`);
+        this.cdr.markForCheck();
+      },
+      error: (error) => this.handleError(error)
+    });
+  }
+
+  deleteService(service: AdminService): void {
+    this.openServiceDeleteConfirmation([service]);
+  }
+
+  deleteProduct(product: AdminProduct): void {
+    this.openProductDeleteConfirmation([product]);
+  }
+
+  deleteServices(services: AdminService[]): void {
+    if (services.length === 0) return;
+    this.openServiceDeleteConfirmation(services);
+  }
+
+  deleteProducts(products: AdminProduct[]): void {
+    if (products.length === 0) return;
+    this.openProductDeleteConfirmation(products);
+  }
+
+  cancelDeleteConfirmation(): void {
+    if (this.deletingResource) return;
+    this.deleteConfirmation = null;
+  }
+
+  confirmDeletion(): void {
+    const confirmation = this.deleteConfirmation;
+    if (!confirmation || this.deletingResource) return;
+
+    this.deletingResource = true;
+    if (confirmation.kind === 'services') {
+      const ids = new Set(confirmation.items.map((service) => service.id));
+      forkJoin(confirmation.items.map((service) => this.api.deleteService(service.id))).pipe(
+        finalize(() => {
+          this.deletingResource = false;
+          this.cdr.markForCheck();
+        }),
+      ).subscribe({
+        next: () => {
+          this.services = this.services.filter((service) => !ids.has(service.id));
+          this.products = this.products.filter((product) => !ids.has(product.service_id));
+          if (this.selectedService && ids.has(this.selectedService.id)) this.selectedService = null;
+          this.deleteConfirmation = null;
+          this.showToast(`${confirmation.items.length} service(s) supprimé(s).`);
+        },
+        error: (error) => this.handleError(error)
+      });
+      return;
+    }
+
+    const ids = new Set(confirmation.items.map((product) => product.id));
+    forkJoin(confirmation.items.map((product) => this.api.deleteProduct(product.id))).pipe(
+      finalize(() => {
+        this.deletingResource = false;
+        this.cdr.markForCheck();
+      }),
+    ).subscribe({
+      next: () => {
+        this.products = this.products.filter((product) => !ids.has(product.id));
+        this.deleteConfirmation = null;
+        this.showToast(`${confirmation.items.length} produit(s) supprimé(s).`);
+      },
+      error: (error) => this.handleError(error)
+    });
+  }
+
+  changeCatalogBulkStatus(event: CatalogBulkStatusChange): void {
+    if (event.items.length === 0) return;
+    if (event.mode === 'services') {
+      forkJoin(event.items.map((service) => this.api.updateServiceStatus(service.id, event.status))).subscribe({
+        next: (updatedServices) => {
+          updatedServices.forEach((service) => this.replaceService(service));
+          this.showToast(`${updatedServices.length} service(s) mis à jour.`);
+        },
+        error: (error) => this.handleError(error)
+      });
+      return;
+    }
+
+    forkJoin(event.items.map((product) => this.api.updateProductStatus(product.id, event.status))).subscribe({
+      next: (updatedProducts) => {
+        const updatedById = new Map(updatedProducts.map((product) => [product.id, product]));
+        this.products = this.products.map((product) => updatedById.get(product.id) ?? product);
+        this.showToast(`${updatedProducts.length} produit(s) mis à jour.`);
+        this.cdr.markForCheck();
+      },
+      error: (error) => this.handleError(error)
+    });
+  }
+
+  changeUsersBulkStatus(event: { users: ApiUser[]; status: ApiUser['status'] }): void {
+    if (event.users.length === 0) return;
+
+    forkJoin(event.users.map((user) => this.api.updateUserStatus(user.id, event.status))).subscribe({
+      next: (updatedUsers) => {
+        const updatedById = new Map(updatedUsers.map((user) => [user.id, user]));
+        this.users = this.users.map((user) => updatedById.get(user.id) ?? user);
+        this.showToast(`${updatedUsers.length} utilisateur(s) mis à jour.`);
         this.cdr.markForCheck();
       },
       error: (error) => this.handleError(error)
@@ -970,6 +1073,37 @@ export class AdminDashboardComponent implements OnInit {
     this.services = this.services.map((item) => item.id === service.id ? { ...item, ...service } : item);
     if (this.selectedService?.id === service.id) this.selectedService = { ...this.selectedService, ...service };
     this.cdr.markForCheck();
+  }
+
+  private openServiceDeleteConfirmation(items: AdminService[]): void {
+    const isSingle = items.length === 1;
+    const productsCount = items.reduce((count, service) => count + this.serviceProducts(service.id).length, 0);
+    this.deleteConfirmation = {
+      kind: 'services',
+      items,
+      title: isSingle ? 'Supprimer ce service ?' : `Supprimer ${items.length} services ?`,
+      message: isSingle
+        ? `Le service « ${items[0].name} » sera supprimé définitivement.`
+        : `${items.length} services sélectionnés seront supprimés définitivement.`,
+      details: productsCount > 0
+        ? `${productsCount} produit(s) lié(s) seront aussi retirés de l'affichage local après la suppression.`
+        : 'Cette action ne pourra pas être annulée depuis le dashboard.',
+      confirmLabel: isSingle ? 'Supprimer le service' : 'Supprimer les services',
+    };
+  }
+
+  private openProductDeleteConfirmation(items: AdminProduct[]): void {
+    const isSingle = items.length === 1;
+    this.deleteConfirmation = {
+      kind: 'products',
+      items,
+      title: isSingle ? 'Supprimer ce produit ?' : `Supprimer ${items.length} produits ?`,
+      message: isSingle
+        ? `Le produit « ${items[0].name} » sera supprimé définitivement.`
+        : `${items.length} produits sélectionnés seront supprimés définitivement.`,
+      details: 'Cette action ne pourra pas être annulée depuis le dashboard.',
+      confirmLabel: isSingle ? 'Supprimer le produit' : 'Supprimer les produits',
+    };
   }
 
   private newServiceForm() {

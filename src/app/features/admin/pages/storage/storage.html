@@ -61,3 +61,15 @@
     }
   </div>
 </section>
+
+@if (pendingRemoval()) {
+  <app-confirm-dialog
+    title="Supprimer cette image ?"
+    [message]="'L’image « ' + pendingRemoval()!.name + ' » sera supprimée définitivement du bucket.'"
+    details="Cette action ne pourra pas être annulée depuis le dashboard."
+    confirmLabel="Supprimer l’image"
+    [loading]="deleting()"
+    (cancel)="cancelRemoval()"
+    (confirm)="confirmRemoval()"
+  />
+}
